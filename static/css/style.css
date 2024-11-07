@@ -1,0 +1,111 @@
+/* Estilos mejorados para el navbar */
+.navbar {
+    background-color: white !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    padding: 15px 0;
+    transition: all 0.3s ease;
+}
+
+.navbar:hover {
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+/* Animación y estilos para el logo */
+.navbar-brand img {
+    height: 45px;
+    transition: all 0.3s ease;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+}
+
+.navbar-brand img:hover {
+    transform: scale(1.05);
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
+}
+
+/* Mejoras en la barra de búsqueda */
+.search-box {
+    position: relative;
+    width: 300px;
+    transition: all 0.3s ease;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 12px 20px;
+    border: 2px solid #e0e0e0;
+    border-radius: 25px;
+    background-color: #f8f9fa;
+    transition: all 0.3s ease;
+}
+
+.search-box input:focus {
+    outline: none;
+    border-color: #28a745;
+    box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.2);
+}
+
+.search-box button {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: none;
+    background: none;
+    color: #28a745;
+    transition: all 0.3s ease;
+}
+
+.search-box button:hover {
+    color: #218838;
+    transform: translateY(-50%) scale(1.1);
+}
+
+/* Mejoras en los links de navegación */
+.nav-link {
+    color: #495057 !important;
+    padding: 8px 15px !important;
+    margin: 0 5px;
+    transition: all 0.3s ease;
+    border-radius: 20px;
+}
+
+.nav-link:hover {
+    color: #28a745 !important;
+    background-color: rgba(40, 167, 69, 0.1);
+    transform: translateY(-1px);
+}
+
+/* Mejoras en el botón de inicio de sesión */
+.btn-iniciar-sesion {
+    background-color: #28a745;
+    color: white !important;
+    border-radius: 25px;
+    padding: 10px 25px !important;
+    margin-left: 15px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(40, 167, 69, 0.2);
+}
+
+.btn-iniciar-sesion:hover {
+    background-color: #218838;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+}
+
+/* Animación para los íconos */
+.nav-link i {
+    transition: all 0.3s ease;
+}
+
+.nav-link:hover i {
+    transform: scale(1.2);
+}
+
+/* Efecto de hover para todo el navbar */
+.navbar:hover .nav-link {
+    opacity: 0.7;
+}
+
+.navbar:hover .nav-link:hover {
+    opacity: 1;
+}

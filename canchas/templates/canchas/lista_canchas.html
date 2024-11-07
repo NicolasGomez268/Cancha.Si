@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="text-center mb-4">Nuestras Canchas</h1>
+    
+    <div class="row">
+        {% for cancha in canchas %}
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">{{ cancha.nombre }}</h5>
+                    <p class="card-text">
+                        <strong>Tipo:</strong> {{ cancha.tipo }}<br>
+                        <strong>Precio por hora:</strong> ${{ cancha.precio_hora }}
+                    </p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="badge {% if cancha.disponible %}bg-success{% else %}bg-danger{% endif %}">
+                            {{ cancha.disponible|yesno:"Disponible,No Disponible" }}
+                        </span>
+                        <a href="#" class="btn btn-primary">Reservar</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

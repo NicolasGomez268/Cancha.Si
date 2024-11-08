@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block title %}Editar Perfil{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Editar Perfil</h4>
+                </div>
+                <div class="card-body">
+                    {% if user.perfil_jugador %}
+                        <!-- Formulario para Jugador -->
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label class="form-label">Foto de Perfil</label>
+                                <input type="file" class="form-control" name="foto">
+                                {% if perfil.foto %}
+                                    <small class="text-muted">Actual: {{ perfil.foto.name }}</small>
+                                {% endif %}
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Nombre</label>
+                                    <input type="text" class="form-control" name="first_name" value="{{ user.first_name }}" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Apellido</label>
+                                    <input type="text" class="form-control" name="last_name" value="{{ user.last_name }}" required>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Posición</label>
+                                <select class="form-select" name="posicion" required>
+                                    <option value="ARQ" {% if perfil.posicion == 'ARQ' %}selected{% endif %}>Arquero</option>
+                                    <option value="DEF" {% if perfil.posicion == 'DEF' %}selected{% endif %}>Defensor</option>
+                                    <option value="MED" {% if perfil.posicion == 'MED' %}selected{% endif %}>Mediocampista</option>
+                                    <option value="DEL" {% if perfil.posicion == 'DEL' %}selected{% endif %}>Delantero</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Teléfono</label>
+                                <input type="tel" class="form-control" name="telefono" value="{{ perfil.telefono }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Ubicación</label>
+                                <input type="text" class="form-control" name="ubicacion" value="{{ perfil.ubicacion }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Edad</label>
+                                <input type="number" class="form-control" name="edad" value="{{ perfil.edad }}" required>
+                            </div>
+                        </form>
+                    {% else %}
+                        <!-- Formulario para Cliente -->
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label class="form-label">Razón Social</label>
+                                <input type="text" class="form-control" name="razon_social" value="{{ perfil.razon_social }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">CUIT</label>
+                                <input type="text" class="form-control" name="cuit" value="{{ perfil.cuit }}" readonly>
+                                <small class="text-muted">El CUIT no se puede modificar</small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Teléfono</label>
+                                <input type="tel" class="form-control" name="telefono" value="{{ perfil.telefono }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Dirección</label>
+                                <input type="text" class="form-control" name="direccion" value="{{ perfil.direccion }}" required>
+                            </div>
+                        </form>
+                    {% endif %}
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                        <a href="{% url 'usuarios:perfil' %}" class="btn btn-outline-secondary">Cancelar</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

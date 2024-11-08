@@ -4,69 +4,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cancha.Si</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <link href="{% static 'css/style.css' %}" rel="stylesheet">
+    <title>Cancha.Si - {% block title %}{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
-            <a class="navbar-brand" href="{% url 'home' %}">
-                <img src="{% static 'images/logo.jpg' %}" alt="Cancha.Si">
-            </a>
-            
-            <div class="search-box mx-4">
-                <input type="text" placeholder="Buscar cancha...">
-                <button type="submit">
-                    <i class="fas fa-search"></i>
-                </button>
-            </div>
-
+            <a class="navbar-brand" href="{% url 'home' %}">Cancha.Si</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
-
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto align-items-center">
+                <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'home' %}">
-                            <i class="fas fa-home"></i> Inicio
-                        </a>
+                        <a class="nav-link" href="{% url 'canchas:lista_canchas' %}">Canchas</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">
-                            <i class="fas fa-calendar-alt"></i> Mis Reservas
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">
-                            <i class="fas fa-users"></i> Buscar Jugadores
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">
-                            <i class="fas fa-user"></i> Mi Perfil
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">
-                            <i class="fas fa-envelope"></i> Contacto
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link btn-iniciar-sesion" href="#">
-                            Iniciar Sesión
-                        </a>
-                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    {% if user.is_authenticated %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'usuarios:perfil' %}">Mi Perfil</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'usuarios:logout' %}">Cerrar Sesión</a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'usuarios:login' %}">Iniciar Sesión</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'usuarios:registro' %}">Registrarse</a>
+                        </li>
+                    {% endif %}
                 </ul>
             </div>
         </div>
     </nav>
 
-    {% block content %}
-    {% endblock %}
+    <main class="container mt-4">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        {% block content %}{% endblock %}
+    </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Toast para Notificaciones -->
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050">
+        <div id="notificacionToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <i class="fas fa-bell text-primary me-2"></i>
+                <strong class="me-auto" id="notificacionToastTitulo"></strong>
+                <small class="text-muted">ahora</small>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" id="notificacionToastMensaje">
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{% static 'js/notificaciones.js' %}"></script>
 </body>
 </html>

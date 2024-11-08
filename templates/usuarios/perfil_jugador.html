@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}Mi Perfil - Jugador{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    {% if perfil.foto %}
+                        <img src="{{ perfil.foto.url }}" class="rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+                    {% else %}
+                        <img src="https://via.placeholder.com/150" class="rounded-circle mb-3">
+                    {% endif %}
+                    <h3>{{ user.get_full_name }}</h3>
+                    <p class="text-muted">{{ perfil.get_posicion_display }}</p>
+                    {% if perfil.penalizado %}
+                        <div class="alert alert-warning">
+                            Penalizado hasta: {{ perfil.fin_penalizacion }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Información Personal</h4>
+                    <a href="{% url 'usuarios:editar_perfil' %}" class="btn btn-primary btn-sm">Editar Perfil</a>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-sm-3">
+                            <h6 class="mb-0">Nombre</h6>
+                        </div>
+                        <div class="col-sm-9 text-secondary">
+                            {{ user.get_full_name }}
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-3">
+                            <h6 class="mb-0">Email</h6>
+                        </div>
+                        <div class="col-sm-9 text-secondary">
+                            {{ user.email }}
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-3">
+                            <h6 class="mb-0">Teléfono</h6>
+                        </div>
+                        <div class="col-sm-9 text-secondary">
+                            {{ perfil.telefono }}
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-sm-3">
+                            <h6 class="mb-0">Ubicación</h6>
+                        </div>
+                        <div class="col-sm-9 text-secondary">
+                            {{ perfil.ubicacion }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h4 class="mb-0">Mis Reservas</h4>
+                </div>
+                <div class="card-body">
+                    {% if user.reservas.all %}
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Cancha</th>
+                                        <th>Fecha</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for reserva in user.reservas.all %}
+                                    <tr>
+                                        <td>{{ reserva.cancha.nombre }}</td>
+                                        <td>{{ reserva.fecha_hora }}</td>
+                                        <td>
+                                            {% if reserva.cancelada %}
+                                                <span class="badge bg-danger">Cancelada</span>
+                                            {% elif reserva.sena_pagada %}
+                                                <span class="badge bg-success">Confirmada</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">Pendiente</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if not reserva.cancelada %}
+                                                <button class="btn btn-danger btn-sm">Cancelar</button>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-center">No tienes reservas activas</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

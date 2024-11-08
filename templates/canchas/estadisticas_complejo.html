@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Estadísticas - {{ complejo.nombre }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+            <div class="position-sticky pt-3">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'canchas:panel_admin' %}">
+                            <i class="fas fa-home"></i> Panel Principal
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#">
+                            <i class="fas fa-chart-bar"></i> Estadísticas
+                        </a>
+                    </li>
+                    <!-- Agregar más items del menú según necesites -->
+                </ul>
+            </div>
+        </div>
+
+        <!-- Contenido Principal -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">{{ complejo.nombre }} - Estadísticas</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <div class="btn-group me-2">
+                        <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                            <i class="fas fa-download"></i> Descargar
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" onclick="descargarReporte()">PDF</a></li>
+                            <li><a class="dropdown-item" href="{% url 'canchas:exportar_estadisticas' complejo.id %}?periodo={{ periodo }}">Excel</a></li>
+                        </ul>
+                    </div>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                            <i class="fas fa-calendar"></i> Esta Semana
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" onclick="cambiarPeriodo('semana')">Esta Semana</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="cambiarPeriodo('mes')">Este Mes</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="cambiarPeriodo('año')">Este Año</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tarjetas de Resumen -->
+            <div class="row">
+                <div class="col-md-3 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h6 class="card-title text-muted">Reservas Totales</h6>
+                            <h2 class="card-text">{{ complejo.total_reservas }}</h2>
+                            <p class="mb-0 text-success">
+                                <i class="fas fa-arrow-up"></i> 12% vs mes anterior
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h6 class="card-title text-muted">Ingresos</h6>
+                            <h2 class="card-text">${{ complejo.ingresos_totales|floatformat:2 }}</h2>
+                            <p class="mb-0 text-success">
+                                <i class="fas fa-arrow-up"></i> 8% vs mes anterior
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h6 class="card-title text-muted">Tasa de Ocupación</h6>
+                            <h2 class="card-text">{{ complejo.tasa_ocupacion }}%</h2>
+                            <p class="mb-0 text-danger">
+                                <i class="fas fa-arrow-down"></i> 3% vs mes anterior
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h6 class="card-title text-muted">Cancelaciones</h6>
+                            <h2 class="card-text">{{ complejo.tasa_cancelacion }}%</h2>
+                            <p class="mb-0 text-success">
+                                <i class="fas fa-arrow-down"></i> 2% vs mes anterior
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráficos -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Reservas por Día</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="reservasPorDia"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Distribución de Horarios</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="distribucionHorarios"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabla de Reservas Recientes -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Reservas Recientes</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Cancha</th>
+                                    <th>Fecha</th>
+                                    <th>Cliente</th>
+                                    <th>Estado</th>
+                                    <th>Monto</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for reserva in complejo.reservas_recientes %}
+                                <tr>
+                                    <td>{{ reserva.cancha.nombre }}</td>
+                                    <td>{{ reserva.fecha_hora|date:"d/m/Y H:i" }}</td>
+                                    <td>{{ reserva.jugador.get_full_name }}</td>
+                                    <td>
+                                        <span class="badge bg-{{ reserva.estado_badge }}">
+                                            {{ reserva.estado_display }}
+                                        </span>
+                                    </td>
+                                    <td>${{ reserva.precio_total }}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gráfico de Reservas por Día
+    const ctxReservas = document.getElementById('reservasPorDia').getContext('2d');
+    new Chart(ctxReservas, {
+        type: 'line',
+        data: {
+            labels: {{ reservas_por_dia_labels|safe }},
+            datasets: [{
+                label: 'Reservas',
+                data: {{ reservas_por_dia_data }},
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                title: {
+                    display: true,
+                    text: 'Reservas Diarias'
+                }
+            }
+        }
+    });
+
+    // Gráfico de Ingresos por Cancha
+    const ctxIngresos = document.getElementById('ingresosPorCancha').getContext('2d');
+    new Chart(ctxIngresos, {
+        type: 'doughnut',
+        data: {
+            labels: {{ ingresos_por_cancha_labels|safe }},
+            datasets: [{
+                data: {{ ingresos_por_cancha_data }},
+                backgroundColor: [
+                    'rgb(255, 99, 132)',
+                    'rgb(54, 162, 235)',
+                    'rgb(255, 205, 86)',
+                    'rgb(75, 192, 192)'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                }
+            }
+        }
+    });
+});
+
+function cambiarPeriodo(periodo) {
+    // Implementar la lógica para cambiar el período de tiempo
+    console.log('Cambiando período a:', periodo);
+}
+
+function descargarReporte() {
+    // Implementar la lógica para descargar el reporte
+    console.log('Descargando reporte...');
+}
+</script>
+{% endblock %}

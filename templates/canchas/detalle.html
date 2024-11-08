@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ cancha.nombre }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-6">
+            {% if cancha.foto %}
+                <img src="{{ cancha.foto.url }}" class="img-fluid rounded" alt="{{ cancha.nombre }}">
+            {% else %}
+                <img src="https://via.placeholder.com/600x400" class="img-fluid rounded" alt="Sin imagen">
+            {% endif %}
+        </div>
+        <div class="col-md-6">
+            <h2>{{ cancha.nombre }}</h2>
+            <p class="text-muted">{{ cancha.complejo.nombre }}</p>
+            
+            <div class="mb-4">
+                <h4>Información</h4>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-map-marker-alt"></i> {{ cancha.complejo.ubicacion }}</li>
+                    <li><i class="fas fa-phone"></i> {{ cancha.complejo.telefono }}</li>
+                    <li><i class="fas fa-dollar-sign"></i> ${{ cancha.precio_hora }}/hora</li>
+                </ul>
+            </div>
+            
+            <div class="mb-4">
+                <h4>Servicios</h4>
+                <ul class="list-unstyled">
+                    {% for servicio, disponible in cancha.servicios.items %}
+                        <li>
+                            <i class="fas fa-{% if disponible %}check text-success{% else %}times text-danger{% endif %}"></i>
+                            {{ servicio }}
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            
+            {% if user.is_authenticated and user.perfil_jugador %}
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="mb-0">Hacer Reserva</h4>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" action="{% url 'canchas:reservar_cancha' cancha.id %}">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label class="form-label">Fecha y Hora</label>
+                                <select class="form-select" name="fecha_hora" required>
+                                    {% for horario in horarios_disponibles %}
+                                        <option value="{{ horario|date:'Y-m-d H:i' }}">
+                                            {{ horario|date:'d/m/Y H:i' }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            {% if cancha.servicios %}
+                                <div class="mb-3">
+                                    <label class="form-label">Turno Servicios</label>
+                                    <select class="form-select" name="turno_servicios">
+                                        <option value="">Sin servicios</option>
+                                        <option value="MD">Medio día</option>
+                                        <option value="N">Noche</option>
+                                    </select>
+                                </div>
+                            {% endif %}
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">Reservar Ahora</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            {% elif not user.is_authenticated %}
+                <div class="alert alert-info">
+                    <a href="{% url 'usuarios:login' %}">Inicia sesión</a> para realizar una reserva
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

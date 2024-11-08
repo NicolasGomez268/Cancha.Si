@@ -20,7 +20,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-1_n_pzu^8rarqe$f3!w594ai=a$6vw6@q30!s0g6o0z+n733@+'
+SECRET_KEY = 'django-insecure-)#c6vkrn$ybo^i_+*82*p*&27$=xnc98xx9@nu7x$*3!gbyh#f'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -37,9 +37,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'usuarios',
-    'clientes',
     'canchas',
+    'usuarios',
+    'channels',
 ]
 
 MIDDLEWARE = [
@@ -119,11 +119,41 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
 STATIC_URL = 'static/'
-STATICFILES_DIRS = [
-    BASE_DIR / 'static'
-]
+STATICFILES_DIRS = [BASE_DIR / 'static']
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Configuración de Channels
+ASGI_APPLICATION = 'CanchaSi.asgi.application'
+
+# Configurar canal de Redis para las notificaciones en tiempo real
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],
+        },
+    },
+}
+
+# Configuración de Email
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'  # O tu servidor SMTP preferido
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'tu_email@gmail.com'  # Reemplazar con tu email
+EMAIL_HOST_PASSWORD = 'tu_contraseña'    # Reemplazar con tu contraseña de aplicación
+DEFAULT_FROM_EMAIL = 'CanchaSi <tu_email@gmail.com>'
+
+# Configuración de Celery
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'America/Argentina/Buenos_Aires'  # Tu zona horaria

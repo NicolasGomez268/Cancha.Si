@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Reporte - {{ complejo.nombre }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 20px;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-box {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{ complejo.nombre }}</h1>
+        <h2>Reporte de Actividad</h2>
+        <p>Período: {{ fecha_inicio|date:"d/m/Y" }} - {{ fecha_fin|date:"d/m/Y" }}</p>
+        <p>Generado el: {{ fecha_generacion|date:"d/m/Y H:i" }}</p>
+    </div>
+
+    <div class="section">
+        <h3>Resumen General</h3>
+        <div class="stats-grid">
+            <div class="stat-box">
+                <h4>Total de Reservas</h4>
+                <p>{{ total_reservas }}</p>
+            </div>
+            <div class="stat-box">
+                <h4>Ingresos Totales</h4>
+                <p>${{ ingresos_totales|floatformat:2 }}</p>
+            </div>
+            <div class="stat-box">
+                <h4>Promedio Diario</h4>
+                <p>${{ promedio_diario|floatformat:2 }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h3>Canchas Más Reservadas</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Cancha</th>
+                    <th>Total Reservas</th>
+                    <th>Ingresos Generados</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cancha in canchas_mas_reservadas %}
+                <tr>
+                    <td>{{ cancha.nombre }}</td>
+                    <td>{{ cancha.reservas.count }}</td>
+                    <td>${{ cancha.total_ingresos|default:0|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section">
+        <h3>Actividad Diaria</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Reservas</th>
+                    <th>Ingresos</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for fecha, datos in datos_diarios %}
+                <tr>
+                    <td>{{ fecha|date:"d/m/Y" }}</td>
+                    <td>{{ datos.total_reservas }}</td>
+                    <td>${{ datos.ingresos|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="footer">
+        <p>© {% now "Y" %} {{ complejo.nombre }} - Todos los derechos reservados</p>
+        <p>Reporte generado automáticamente por CanchaSi</p>
+    </div>
+</body>
+</html>

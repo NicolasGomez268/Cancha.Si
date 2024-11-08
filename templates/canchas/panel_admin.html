@@ -1,0 +1,150 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Panel de Administración{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
+            <div class="position-sticky pt-3">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{% url 'canchas:panel_admin' %}">
+                            <i class="fas fa-home"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#reservasCollapse" data-bs-toggle="collapse">
+                            <i class="fas fa-calendar"></i> Reservas
+                        </a>
+                        <div class="collapse" id="reservasCollapse">
+                            <ul class="nav flex-column ms-3">
+                                <li class="nav-item">
+                                    <a class="nav-link" href="#">Pendientes</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="#">Confirmadas</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="#">Historial</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#complejosCollapse" data-bs-toggle="collapse">
+                            <i class="fas fa-building"></i> Mis Complejos
+                        </a>
+                        <div class="collapse" id="complejosCollapse">
+                            <ul class="nav flex-column ms-3">
+                                {% for complejo in complejos %}
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{% url 'canchas:estadisticas_complejo' complejo.id %}">
+                                            {{ complejo.nombre }}
+                                        </a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">
+                            <i class="fas fa-chart-bar"></i> Estadísticas
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">
+                            <i class="fas fa-cog"></i> Configuración
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Contenido Principal -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">Dashboard</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#nuevoComplejoModal">
+                        <i class="fas fa-plus"></i> Nuevo Complejo
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tarjetas de Resumen -->
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Canchas Totales</h5>
+                            <h2 class="card-text">{{ total_canchas }}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Reservas Hoy</h5>
+                            <h2 class="card-text">{{ reservas_hoy }}</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Ingresos del Mes</h5>
+                            <h2 class="card-text">${{ ingresos_mes|floatformat:2 }}</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lista de Complejos -->
+            <h3>Mis Complejos</h3>
+            <div class="row">
+                {% for complejo in complejos %}
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ complejo.nombre }}</h5>
+                                <p class="card-text">
+                                    <i class="fas fa-map-marker-alt"></i> {{ complejo.ubicacion }}<br>
+                                    <i class="fas fa-phone"></i> {{ complejo.telefono }}
+                                </p>
+                                <h6>Canchas ({{ complejo.canchas.count }})</h6>
+                                <div class="list-group">
+                                    {% for cancha in complejo.canchas.all %}
+                                        <a href="{% url 'canchas:gestionar_cancha' cancha.id %}" class="list-group-item list-group-item-action">
+                                            {{ cancha.nombre }} - ${{ cancha.precio_hora }}/hora
+                                        </a>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="card-footer">
+                                <a href="{% url 'canchas:estadisticas_complejo' complejo.id %}" class="btn btn-primary">
+                                    Ver Estadísticas
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- Modal Nuevo Complejo -->
+<div class="modal fade" id="nuevoComplejoModal" tabindex="-1">
+    <!-- ... (mantener el modal existente) ... -->
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Aquí irá el código JavaScript para las gráficas
+</script>
+{% endblock %}

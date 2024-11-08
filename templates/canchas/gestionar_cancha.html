@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ cancha.nombre|default:"Nueva Cancha" }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">{{ cancha.nombre|default:"Nueva Cancha" }}</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Nombre</label>
+                                <input type="text" class="form-control" name="nombre" value="{{ cancha.nombre|default:'' }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Precio por Hora</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control" name="precio_hora" value="{{ cancha.precio_hora|default:'' }}" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Descripción</label>
+                            <textarea class="form-control" name="descripcion" rows="3">{{ cancha.descripcion|default:'' }}</textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Foto</label>
+                            {% if cancha.foto %}
+                                <div class="mb-2">
+                                    <img src="{{ cancha.foto.url }}" alt="{{ cancha.nombre }}" class="img-thumbnail" style="max-height: 200px;">
+                                </div>
+                            {% endif %}
+                            <input type="file" class="form-control" name="foto" accept="image/*">
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">Servicios Disponibles</label>
+                            <div class="row">
+                                {% for codigo, nombre in servicios_disponibles %}
+                                    <div class="col-md-4 mb-2">
+                                        <div class="form-check">
+                                            <input type="checkbox" class="form-check-input" 
+                                                   name="servicio_{{ codigo }}" 
+                                                   id="servicio_{{ codigo }}"
+                                                   {% if cancha and codigo in cancha.servicios %}checked{% endif %}>
+                                            <label class="form-check-label" for="servicio_{{ codigo }}">
+                                                {{ nombre }}
+                                            </label>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'canchas:panel_admin' %}" class="btn btn-secondary">Cancelar</a>
+                            <div>
+                                {% if cancha %}
+                                    <button type="button" class="btn btn-danger me-2" data-bs-toggle="modal" data-bs-target="#eliminarModal">
+                                        Eliminar
+                                    </button>
+                                {% endif %}
+                                <button type="submit" class="btn btn-primary">
+                                    {% if cancha %}Actualizar{% else %}Crear{% endif %} Cancha
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if cancha %}
+<!-- Modal Eliminar -->
+<div class="modal fade" id="eliminarModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Eliminación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que quieres eliminar la cancha "{{ cancha.nombre }}"?</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Esta acción no se puede deshacer y eliminará todas las reservas asociadas.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form method="post" action="{% url 'canchas:eliminar_cancha' cancha.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Eliminar Cancha</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

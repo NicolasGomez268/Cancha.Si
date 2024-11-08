@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalle de Reserva{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Detalle de Reserva #{{ reserva.id }}</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-sm-6">
+                            <h6 class="mb-3">Cancha</h6>
+                            <div><strong>{{ reserva.cancha.nombre }}</strong></div>
+                            <div>{{ reserva.cancha.complejo.nombre }}</div>
+                            <div>{{ reserva.cancha.complejo.ubicacion }}</div>
+                        </div>
+                        <div class="col-sm-6">
+                            <h6 class="mb-3">Detalles</h6>
+                            <div><strong>Fecha y Hora:</strong> {{ reserva.fecha_hora|date:"d/m/Y H:i" }}</div>
+                            <div><strong>Estado Pago:</strong> {{ reserva.estado_pago }}</div>
+                            <div><strong>Precio Total:</strong> ${{ reserva.precio_total }}</div>
+                        </div>
+                    </div>
+
+                    {% if reserva.estado_pago == 'PENDIENTE' %}
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title">Opciones de Pago</h5>
+                                <div class="row">
+                                    <div class="col-sm-6">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <h6 class="card-title">Pagar Seña</h6>
+                                                <p class="card-text">50% del total: ${{ reserva.monto_sena }}</p>
+                                                <form method="post" action="{% url 'canchas:procesar_pago' reserva.id %}">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="tipo_pago" value="SENA">
+                                                    <button type="submit" class="btn btn-primary">Pagar Seña</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <h6 class="card-title">Pago Total</h6>
+                                                <p class="card-text">Monto: ${{ reserva.precio_total }}</p>
+                                                <form method="post" action="{% url 'canchas:procesar_pago' reserva.id %}">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="tipo_pago" value="TOTAL">
+                                                    <button type="submit" class="btn btn-success">Pagar Total</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <div class="mt-4">
+                        <a href="{% url 'usuarios:perfil' %}" class="btn btn-secondary">Volver al Perfil</a>
+                        {% if not reserva.cancelada and reserva.fecha_hora|date:'Y-m-d' > now|date:'Y-m-d' %}
+                            <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#cancelarModal">
+                                Cancelar Reserva
+                            </button>
+                        {% endif %}
+                    </div>
+
+                    {% if reserva.pagado %}
+                        <div class="mt-3">
+                            <a href="{% url 'canchas:comprobante_reserva' reserva.id %}" 
+                               class="btn btn-success">
+                                <i class="fas fa-download"></i> Descargar Comprobante
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Cancelar -->
+<div class="modal fade" id="cancelarModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmar Cancelación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que quieres cancelar esta reserva?</p>
+                {% if reserva.estado_pago != 'PENDIENTE' %}
+                    <div class="alert alert-warning">
+                        Ya has realizado un pago por esta reserva. La devolución puede demorar hasta 48 horas hábiles.
+                    </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <form method="post" action="{% url 'canchas:cancelar_reserva' reserva.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Confirmar Cancelación</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

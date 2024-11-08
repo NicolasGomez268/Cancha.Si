@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Comprobante de Reserva #{{ reserva.id }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 20px;
+        }
+        .info-section {
+            margin-bottom: 30px;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .label {
+            font-weight: bold;
+            color: #666;
+        }
+        .value {
+            color: #333;
+        }
+        .total-section {
+            border-top: 2px solid #4CAF50;
+            margin-top: 30px;
+            padding-top: 20px;
+            text-align: right;
+        }
+        .qr-code {
+            text-align: center;
+            margin-top: 30px;
+        }
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Comprobante de Reserva</h1>
+        <h2>{{ reserva.cancha.complejo.nombre }}</h2>
+        <p>Comprobante #{{ reserva.id }}</p>
+    </div>
+
+    <div class="info-section">
+        <h3>Detalles de la Reserva</h3>
+        <div class="info-grid">
+            <div class="label">Cancha:</div>
+            <div class="value">{{ reserva.cancha.nombre }}</div>
+            
+            <div class="label">Fecha:</div>
+            <div class="value">{{ reserva.fecha_hora|date:"d/m/Y" }}</div>
+            
+            <div class="label">Hora:</div>
+            <div class="value">{{ reserva.fecha_hora|time:"H:i" }}</div>
+            
+            <div class="label">Duración:</div>
+            <div class="value">{{ reserva.duracion }} hora(s)</div>
+            
+            <div class="label">Cliente:</div>
+            <div class="value">{{ reserva.jugador.get_full_name }}</div>
+            
+            <div class="label">Estado:</div>
+            <div class="value">{{ reserva.get_estado_display }}</div>
+        </div>
+    </div>
+
+    <div class="total-section">
+        <h3>Resumen de Pago</h3>
+        <p>Precio por hora: ${{ reserva.cancha.precio_hora|floatformat:2 }}</p>
+        <p>Subtotal: ${{ reserva.subtotal|floatformat:2 }}</p>
+        {% if reserva.descuento %}
+        <p>Descuento: ${{ reserva.descuento|floatformat:2 }}</p>
+        {% endif %}
+        <h4>Total: ${{ reserva.monto_total|floatformat:2 }}</h4>
+    </div>
+
+    <div class="qr-code">
+        <!-- Aquí puedes agregar un código QR si lo necesitas -->
+        <p>Código de Verificación: {{ reserva.codigo_verificacion }}</p>
+    </div>
+
+    <div class="footer">
+        <p>Este comprobante fue generado el {{ fecha_generacion|date:"d/m/Y" }} a las {{ fecha_generacion|time:"H:i" }}</p>
+        <p>© {% now "Y" %} {{ reserva.cancha.complejo.nombre }} - Todos los derechos reservados</p>
+    </div>
+</body>
+</html>

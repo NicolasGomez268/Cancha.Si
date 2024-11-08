@@ -18,15 +18,8 @@
                             <input type="text" class="form-control" name="ubicacion" value="{{ request.GET.ubicacion }}">
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Precio por hora</label>
-                            <div class="row">
-                                <div class="col">
-                                    <input type="number" class="form-control" name="precio_min" placeholder="Min" value="{{ request.GET.precio_min }}">
-                                </div>
-                                <div class="col">
-                                    <input type="number" class="form-control" name="precio_max" placeholder="Max" value="{{ request.GET.precio_max }}">
-                                </div>
-                            </div>
+                            <label class="form-label">Nombre de la Cancha</label>
+                            <input type="text" class="form-control" name="nombre" value="{{ request.GET.nombre }}">
                         </div>
                         <div class="d-grid">
                             <button type="submit" class="btn btn-primary">Aplicar Filtros</button>

@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}Notificaciones{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Notificaciones</h4>
+                    {% if notificaciones %}
+                        <button class="btn btn-outline-primary btn-sm" id="marcarTodasLeidas">
+                            Marcar todas como leídas
+                        </button>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if notificaciones %}
+                        <div class="list-group">
+                            {% for notif in notificaciones %}
+                                <div class="list-group-item list-group-item-action {% if not notif.leida %}active{% endif %}"
+                                     data-id="{{ notif.id }}">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h5 class="mb-1">{{ notif.titulo }}</h5>
+                                        <small>{{ notif.fecha|timesince }}</small>
+                                    </div>
+                                    <p class="mb-1">{{ notif.mensaje }}</p>
+                                    {% if notif.url %}
+                                        <a href="{{ notif.url }}" class="btn btn-sm btn-{% if notif.leida %}primary{% else %}light{% endif %}">
+                                            Ver detalles
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-center mb-0">No tienes notificaciones</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Marcar notificación individual como leída
+    document.querySelectorAll('.list-group-item').forEach(item => {
+        item.addEventListener('click', function() {
+            const notifId = this.dataset.id;
+            fetch(`/usuarios/notificaciones/${notifId}/leida/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'ok') {
+                    this.classList.remove('active');
+                }
+            });
+        });
+    });
+
+    // Marcar todas como leídas
+    const btnMarcarTodas = document.getElementById('marcarTodasLeidas');
+    if (btnMarcarTodas) {
+        btnMarcarTodas.addEventListener('click', function() {
+            fetch('/usuarios/notificaciones/marcar-todas/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'ok') {
+                    document.querySelectorAll('.list-group-item.active').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                }
+            });
+        });
+    }
+});
+</script>
+{% endblock %}
+{% endblock %}

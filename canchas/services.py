@@ -10,6 +10,9 @@ except OSError:
     WEASYPRINT_ENABLED = False
     print("WeasyPrint no está disponible. Los reportes PDF no funcionarán.")
 
+from openpyxl import Workbook
+from .models import Complejo, Cancha, Reserva
+
 class ReporteService:
     @staticmethod
     def generar_reporte_complejo(complejo, fecha_inicio=None, fecha_fin=None):
@@ -131,3 +134,112 @@ class EstadisticasService:
             'horarios_populares': complejo.obtener_horarios_populares(),
             'canchas_mas_reservadas': complejo.obtener_canchas_mas_reservadas(),
         }
+
+def exportar_estadisticas_complejo_excel(complejo_id):
+    """
+    Exporta las estadísticas de un complejo a Excel
+    """
+    complejo = Complejo.objects.get(id=complejo_id)
+    wb = Workbook()
+    
+    # Hoja de Resumen
+    ws = wb.active
+    ws.title = "Resumen"
+    
+    # Información del Complejo
+    ws['A1'] = 'Estadísticas del Complejo'
+    ws['A2'] = 'Nombre:'
+    ws['B2'] = complejo.nombre
+    ws['A3'] = 'Dueño:'
+    ws['B3'] = complejo.dueno.usuario.get_full_name()
+    ws['A4'] = 'Teléfono:'
+    ws['B4'] = complejo.telefono
+    ws['A5'] = 'Stock Cantina:'
+    ws['B5'] = complejo.stock_cantina
+    ws['A6'] = 'Ingresos Mensuales:'
+    ws['B6'] = f'${complejo.ingresos_mensuales}'
+    
+    # Estadísticas Generales
+    ws['A8'] = 'Estadísticas Generales'
+    ws['A9'] = 'Total Canchas:'
+    ws['B9'] = complejo.canchas.count()
+    ws['A10'] = 'Total Reservas:'
+    total_reservas = Reserva.objects.filter(cancha__complejo=complejo).count()
+    ws['B10'] = total_reservas
+    ws['A11'] = 'Reservas Activas:'
+    reservas_activas = Reserva.objects.filter(cancha__complejo=complejo, cancelada=False).count()
+    ws['B11'] = reservas_activas
+    ws['A12'] = 'Reservas Canceladas:'
+    ws['B12'] = total_reservas - reservas_activas
+    
+    # Detalles de Canchas
+    ws_canchas = wb.create_sheet("Canchas")
+    ws_canchas.append(['Nombre', 'Precio por Hora', 'Servicios', 'Total Reservas', 'Ingresos Generados'])
+    
+    for cancha in complejo.canchas.all():
+        reservas_cancha = Reserva.objects.filter(cancha=cancha, cancelada=False)
+        total_reservas = reservas_cancha.count()
+        ingresos_cancha = sum(r.precio_total for r in reservas_cancha)
+        ws_canchas.append([
+            cancha.nombre,
+            cancha.precio_hora,
+            cancha.servicios,
+            total_reservas,
+            f'${ingresos_cancha}'
+        ])
+    
+    # Detalles de Reservas
+    ws_reservas = wb.create_sheet("Reservas")
+    ws_reservas.append(['Fecha', 'Cancha', 'Jugador', 'Precio Total', 'Estado', 'Seña Pagada'])
+    
+    reservas = Reserva.objects.filter(cancha__complejo=complejo)
+    for reserva in reservas:
+        estado = 'Cancelada' if reserva.cancelada else 'Activa'
+        ws_reservas.append([
+            reserva.fecha_hora.strftime('%d/%m/%Y %H:%M'),
+            reserva.cancha.nombre,
+            reserva.jugador.get_full_name(),
+            f'${reserva.precio_total}',
+            estado,
+            'Sí' if reserva.sena_pagada else 'No'
+        ])
+    
+    # Estadísticas por Mes
+    ws_mensual = wb.create_sheet("Estadísticas Mensuales")
+    ws_mensual.append(['Mes', 'Total Reservas', 'Ingresos', 'Cancelaciones'])
+    
+    from django.db.models import Count
+    from django.db.models.functions import TruncMonth
+    
+    stats_mensuales = (
+        Reserva.objects
+        .filter(cancha__complejo=complejo)
+        .annotate(mes=TruncMonth('fecha_hora'))
+        .values('mes')
+        .annotate(
+            total=Count('id'),
+            canceladas=Count('id', filter=models.Q(cancelada=True)),
+            ingresos=models.Sum('precio_total', filter=models.Q(cancelada=False))
+        )
+        .order_by('mes')
+    )
+    
+    for stat in stats_mensuales:
+        ws_mensual.append([
+            stat['mes'].strftime('%B %Y'),
+            stat['total'],
+            f'${stat["ingresos"] or 0}',
+            stat['canceladas']
+        ])
+    
+    # Generar nombre de archivo
+    fecha = datetime.now().strftime('%Y%m%d_%H%M%S')
+    filename = f'estadisticas_complejo_{complejo.id}_{fecha}.xlsx'
+    
+    # Crear directorio si no existe
+    os.makedirs('media/reportes', exist_ok=True)
+    
+    # Guardar archivo
+    wb.save(f'media/reportes/{filename}')
+    
+    return filename

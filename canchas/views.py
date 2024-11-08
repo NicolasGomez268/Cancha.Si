@@ -7,7 +7,7 @@ from django.db.models import Count, Sum
 from django.db.models.functions import TruncDate
 from django.http import FileResponse
 from .models import Cancha, Reserva, Complejo, Pago
-from .services import ReporteService, EstadisticasService
+from .services import ReporteService, EstadisticasService, exportar_estadisticas_complejo_excel
 from usuarios.services import NotificacionService
 from django.urls import reverse
 import os
@@ -16,28 +16,27 @@ from django.core.serializers.json import DjangoJSONEncoder
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment
 from django.http import HttpResponse
+from django.db import models
+from django.db.models.functions import TruncMonth
 
 def home(request):
     # Obtener canchas destacadas o más reservadas
     canchas_destacadas = Cancha.objects.all()[:6]
-    return render(request, 'home.html', {
+    return render(request, 'canchas/home.html', {
         'canchas_destacadas': canchas_destacadas
     })
 
 def lista_canchas(request):
     # Filtros
     ubicacion = request.GET.get('ubicacion')
-    precio_min = request.GET.get('precio_min')
-    precio_max = request.GET.get('precio_max')
+    nombre = request.GET.get('nombre')
     
     canchas = Cancha.objects.all()
     
     if ubicacion:
         canchas = canchas.filter(complejo__ubicacion__icontains=ubicacion)
-    if precio_min:
-        canchas = canchas.filter(precio_hora__gte=precio_min)
-    if precio_max:
-        canchas = canchas.filter(precio_hora__lte=precio_max)
+    if nombre:
+        canchas = canchas.filter(nombre__icontains=nombre)
         
     return render(request, 'canchas/lista.html', {
         'canchas': canchas
@@ -249,120 +248,42 @@ def panel_admin(request):
 
 @user_passes_test(es_dueno)
 def estadisticas_complejo(request, complejo_id):
-    try:
-        complejo = get_object_or_404(Complejo, id=complejo_id, dueno__usuario=request.user)
-        
-        # Obtener período de tiempo
-        periodo = request.GET.get('periodo', 'semana')
-        fecha_fin = timezone.now().date()
-        
-        # Determinar fecha de inicio según el período
-        if periodo == 'semana':
-            fecha_inicio = fecha_fin - timedelta(days=7)
-            titulo_periodo = 'Esta Semana'
-        elif periodo == 'mes':
-            fecha_inicio = fecha_fin - timedelta(days=30)
-            titulo_periodo = 'Este Mes'
-        elif periodo == 'año':
-            fecha_inicio = fecha_fin - timedelta(days=365)
-            titulo_periodo = 'Este Año'
-        else:
-            fecha_inicio = fecha_fin - timedelta(days=7)
-            titulo_periodo = 'Esta Semana'
-
-        # Obtener estadísticas
-        estadisticas = EstadisticasService.obtener_estadisticas_complejo(
-            complejo=complejo,
-            fecha_inicio=fecha_inicio,
-            fecha_fin=fecha_fin
+    """Vista para mostrar estadísticas del complejo"""
+    complejo = get_object_or_404(Complejo, id=complejo_id)
+    
+    # Verificar que el usuario sea el dueño del complejo
+    if request.user.perfilcliente != complejo.dueno:
+        messages.error(request, 'No tienes permiso para ver estas estadísticas.')
+        return redirect('canchas:lista_complejos')
+    
+    # Estadísticas generales
+    total_canchas = complejo.canchas.count()
+    total_reservas = Reserva.objects.filter(cancha__complejo=complejo).count()
+    reservas_activas = Reserva.objects.filter(cancha__complejo=complejo, cancelada=False).count()
+    
+    # Estadísticas por mes
+    stats_mensuales = (
+        Reserva.objects
+        .filter(cancha__complejo=complejo)
+        .annotate(mes=TruncMonth('fecha_hora'))
+        .values('mes')
+        .annotate(
+            total=models.Count('id'),
+            canceladas=models.Count('id', filter=models.Q(cancelada=True)),
+            ingresos=models.Sum('precio_total', filter=models.Q(cancelada=False))
         )
-
-        # Preparar datos para los gráficos
-        reservas_por_dia = {}
-        ingresos_por_cancha = {}
-        
-        # Inicializar todas las fechas en el rango
-        fecha_actual = fecha_inicio
-        while fecha_actual <= fecha_fin:
-            reservas_por_dia[fecha_actual.strftime('%d/%m')] = 0
-            fecha_actual += timedelta(days=1)
-
-        # Obtener reservas en el período
-        reservas = Reserva.objects.filter(
-            cancha__complejo=complejo,
-            fecha_hora__date__range=[fecha_inicio, fecha_fin]
-        ).select_related('cancha')
-
-        # Poblar datos de reservas por día
-        for reserva in reservas:
-            fecha_str = reserva.fecha_hora.strftime('%d/%m')
-            reservas_por_dia[fecha_str] = reservas_por_dia.get(fecha_str, 0) + 1
-
-        # Calcular ingresos por cancha
-        for cancha in complejo.canchas.all():
-            ingresos = sum(
-                reserva.monto_total 
-                for reserva in reservas 
-                if reserva.cancha_id == cancha.id and reserva.pagado
-            )
-            if ingresos > 0:
-                ingresos_por_cancha[cancha.nombre] = ingresos
-
-        # Calcular comparación con período anterior
-        periodo_anterior_inicio = fecha_inicio - (fecha_fin - fecha_inicio)
-        periodo_anterior_fin = fecha_inicio - timedelta(days=1)
-        
-        estadisticas_anterior = EstadisticasService.obtener_estadisticas_complejo(
-            complejo=complejo,
-            fecha_inicio=periodo_anterior_inicio,
-            fecha_fin=periodo_anterior_fin
-        )
-
-        # Calcular variaciones
-        def calcular_variacion(actual, anterior):
-            if anterior == 0:
-                return 100 if actual > 0 else 0
-            return ((actual - anterior) / anterior) * 100
-
-        variaciones = {
-            'reservas': calcular_variacion(
-                estadisticas['total_reservas'],
-                estadisticas_anterior['total_reservas']
-            ),
-            'ingresos': calcular_variacion(
-                estadisticas['ingresos_totales'],
-                estadisticas_anterior['ingresos_totales']
-            ),
-            'ocupacion': calcular_variacion(
-                estadisticas['tasa_ocupacion'],
-                estadisticas_anterior['tasa_ocupacion']
-            ),
-            'cancelaciones': calcular_variacion(
-                estadisticas['reservas_canceladas'],
-                estadisticas_anterior['reservas_canceladas']
-            ) * -1  # Invertir para que la reducción sea positiva
-        }
-
-        context = {
-            'complejo': complejo,
-            'estadisticas': estadisticas,
-            'periodo': periodo,
-            'titulo_periodo': titulo_periodo,
-            'fecha_inicio': fecha_inicio,
-            'fecha_fin': fecha_fin,
-            'reservas_por_dia_labels': json.dumps(list(reservas_por_dia.keys())),
-            'reservas_por_dia_data': json.dumps(list(reservas_por_dia.values())),
-            'ingresos_por_cancha_labels': json.dumps(list(ingresos_por_cancha.keys())),
-            'ingresos_por_cancha_data': json.dumps(list(ingresos_por_cancha.values())),
-            'variaciones': variaciones,
-            'reservas_recientes': reservas.order_by('-fecha_hora')[:10]
-        }
-        
-        return render(request, 'canchas/estadisticas_complejo.html', context)
-        
-    except Exception as e:
-        messages.error(request, f'Error al cargar las estadísticas: {str(e)}')
-        return redirect('canchas:panel_admin')
+        .order_by('-mes')
+    )
+    
+    context = {
+        'complejo': complejo,
+        'total_canchas': total_canchas,
+        'total_reservas': total_reservas,
+        'reservas_activas': reservas_activas,
+        'stats_mensuales': stats_mensuales,
+    }
+    
+    return render(request, 'canchas/estadisticas_complejo.html', context)
 
 @user_passes_test(es_dueno)
 def gestionar_cancha(request, cancha_id=None):
@@ -535,120 +456,31 @@ def descargar_comprobante_reserva(request, reserva_id):
 @user_passes_test(es_dueno)
 def exportar_estadisticas_excel(request, complejo_id):
     try:
-        complejo = get_object_or_404(Complejo, id=complejo_id, dueno__usuario=request.user)
+        complejo = Complejo.objects.get(id=complejo_id)
         
-        # Obtener período de tiempo
-        periodo = request.GET.get('periodo', 'semana')
-        fecha_fin = timezone.now().date()
+        # Verificar que el usuario sea el dueño del complejo
+        if request.user.perfilcliente != complejo.dueno:
+            messages.error(request, 'No tienes permiso para exportar estas estadísticas.')
+            return redirect('canchas:detalle_complejo', complejo_id=complejo_id)
         
-        if periodo == 'semana':
-            fecha_inicio = fecha_fin - timedelta(days=7)
-        elif periodo == 'mes':
-            fecha_inicio = fecha_fin - timedelta(days=30)
-        elif periodo == 'año':
-            fecha_inicio = fecha_fin - timedelta(days=365)
-        else:
-            fecha_inicio = fecha_fin - timedelta(days=7)
-
-        # Obtener estadísticas
-        estadisticas = EstadisticasService.obtener_estadisticas_complejo(
-            complejo=complejo,
-            fecha_inicio=fecha_inicio,
-            fecha_fin=fecha_fin
-        )
-
-        # Crear workbook
-        wb = Workbook()
-        ws = wb.active
-        ws.title = "Estadísticas"
-
-        # Estilos
-        titulo_style = Font(bold=True, size=14)
-        header_style = Font(bold=True)
-        header_fill = PatternFill(start_color="CCCCCC", end_color="CCCCCC", fill_type="solid")
-
-        # Título
-        ws['A1'] = f"Estadísticas de {complejo.nombre}"
-        ws['A1'].font = titulo_style
-        ws.merge_cells('A1:D1')
-        ws['A2'] = f"Período: {fecha_inicio.strftime('%d/%m/%Y')} - {fecha_fin.strftime('%d/%m/%Y')}"
-        ws.merge_cells('A2:D2')
-
-        # Resumen General
-        ws['A4'] = "Resumen General"
-        ws['A4'].font = header_style
-        ws.merge_cells('A4:D4')
-
-        headers = ['Métrica', 'Valor']
-        for col, header in enumerate(headers, 1):
-            cell = ws.cell(row=5, column=col)
-            cell.value = header
-            cell.font = header_style
-            cell.fill = header_fill
-
-        # Datos del resumen
-        resumen_data = [
-            ('Total Reservas', estadisticas['total_reservas']),
-            ('Ingresos Totales', f"${estadisticas['ingresos_totales']:.2f}"),
-            ('Tasa de Ocupación', f"{estadisticas['tasa_ocupacion']:.1f}%"),
-            ('Reservas Canceladas', estadisticas['reservas_canceladas']),
-        ]
-
-        for row, (metrica, valor) in enumerate(resumen_data, 6):
-            ws.cell(row=row, column=1, value=metrica)
-            ws.cell(row=row, column=2, value=valor)
-
-        # Reservas por Cancha
-        ws['A10'] = "Reservas por Cancha"
-        ws['A10'].font = header_style
-        ws.merge_cells('A10:D10')
-
-        headers = ['Cancha', 'Reservas', 'Ingresos']
-        for col, header in enumerate(headers, 1):
-            cell = ws.cell(row=11, column=col)
-            cell.value = header
-            cell.font = header_style
-            cell.fill = header_fill
-
-        # Datos por cancha
-        row = 12
-        for cancha in complejo.canchas.all():
-            reservas_cancha = cancha.reservas.filter(
-                fecha_hora__date__range=[fecha_inicio, fecha_fin]
-            )
-            ingresos_cancha = sum(
-                r.monto_total for r in reservas_cancha if r.pagado
-            )
-            
-            ws.cell(row=row, column=1, value=cancha.nombre)
-            ws.cell(row=row, column=2, value=reservas_cancha.count())
-            ws.cell(row=row, column=3, value=f"${ingresos_cancha:.2f}")
-            row += 1
-
-        # Ajustar anchos de columna
-        for column in ws.columns:
-            max_length = 0
-            column = [cell for cell in column]
-            for cell in column:
-                try:
-                    if len(str(cell.value)) > max_length:
-                        max_length = len(str(cell.value))
-                except:
-                    pass
-            adjusted_width = (max_length + 2)
-            ws.column_dimensions[column[0].column_letter].width = adjusted_width
-
-        # Crear respuesta HTTP
-        response = HttpResponse(
+        # Generar el archivo Excel
+        filename = exportar_estadisticas_complejo_excel(complejo_id)
+        
+        # Ruta completa al archivo
+        filepath = os.path.join('media', 'reportes', filename)
+        
+        # Devolver el archivo como respuesta
+        response = FileResponse(
+            open(filepath, 'rb'),
             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
-        response['Content-Disposition'] = f'attachment; filename=estadisticas_{complejo.nombre}_{periodo}.xlsx'
-
-        # Guardar el archivo
-        wb.save(response)
-
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        
         return response
         
+    except Complejo.DoesNotExist:
+        messages.error(request, 'El complejo no existe.')
+        return redirect('canchas:lista_complejos')
     except Exception as e:
-        messages.error(request, f'Error al exportar las estadísticas: {str(e)}')
-        return redirect('canchas:estadisticas_complejo', complejo_id=complejo_id)
+        messages.error(request, f'Error al exportar estadísticas: {str(e)}')
+        return redirect('canchas:detalle_complejo', complejo_id=complejo_id)

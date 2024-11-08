@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Bienvenido a Cancha.Si</h1>
+<ul>
+    {% for cancha in canchas_destacadas %}
+    <li>{{ cancha.nombre }}</li>
+    {% endfor %}
+</ul>
+{% endblock %}

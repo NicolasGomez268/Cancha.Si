@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="text-center mb-4">Bienvenido a Cancha.Si</h1>
+            
+            {% if user.is_authenticated %}
+                <div class="row justify-content-center">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">¿Qué deseas hacer?</h5>
+                                <div class="d-grid gap-3">
+                                    <a href="{% url 'canchas:lista_canchas' %}" class="btn btn-primary">
+                                        Ver Canchas Disponibles
+                                    </a>
+                                    {% if user.perfilcliente.es_dueno %}
+                                        <a href="{% url 'canchas:panel_admin' %}" class="btn btn-success">
+                                            Panel de Administración
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="text-center">
+                    <p class="lead mb-4">La forma más fácil de reservar tu cancha</p>
+                    <div class="d-grid gap-2 col-md-6 mx-auto">
+                        <a href="{% url 'usuarios:login' %}" class="btn btn-primary btn-lg">
+                            Iniciar Sesión
+                        </a>
+                        <a href="{% url 'usuarios:registro' %}" class="btn btn-outline-primary btn-lg">
+                            Registrarse
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

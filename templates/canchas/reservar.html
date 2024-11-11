@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4 animate__animated animate__fadeIn">
+    <div class="card shadow-lg border-0 rounded-lg">
+        <div class="card-header bg-gradient text-white py-3">
+            <h3 class="mb-0 text-center fw-bold">
+                <i class="fas fa-calendar-alt me-2"></i>Reservá tu cancha
+            </h3>
+        </div>
+        
+        <div class="card-body">
+            <!-- Info de la cancha con hover effect -->
+            <div class="info-card mb-4 p-3 rounded-lg hover-effect">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h4 class="text-primary mb-3">{{ cancha.nombre }} - {{ complejo.nombre }}</h4>
+                        <div class="info-details">
+                            <p class="mb-2 zoom-hover">
+                                <i class="fas fa-map-marker-alt text-danger"></i> 
+                                <span class="ms-2">{{ complejo.ubicacion }}</span>
+                            </p>
+                            <p class="mb-2 zoom-hover">
+                                <i class="fas fa-dollar-sign text-success"></i> 
+                                <span class="ms-2">${{ cancha.precio_hora }}/hora</span>
+                            </p>
+                            <p class="mb-2 zoom-hover">
+                                <i class="fas fa-clock text-info"></i> 
+                                <span class="ms-2">{{ complejo.hora_apertura|time:"H:i" }} - {{ complejo.hora_cierre|time:"H:i" }}</span>
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Selector de fecha con estilo -->
+                    <div class="col-md-6">
+                        <div class="date-picker-container p-3 rounded-lg shadow-sm">
+                            <form method="get" id="fechaForm">
+                                <label for="fecha" class="form-label fw-bold">
+                                    <i class="fas fa-calendar-day text-primary me-2"></i>
+                                    Elegí la fecha
+                                </label>
+                                <input type="date" 
+                                       class="form-control form-control-lg custom-date-input"
+                                       id="fecha" 
+                                       name="fecha" 
+                                       value="{{ fecha_seleccionada|date:'Y-m-d' }}"
+                                       min="{{ fecha_minima|date:'Y-m-d' }}"
+                                       onchange="this.form.submit()">
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grilla de horarios con animaciones -->
+            <div class="horarios-grid">
+                <div class="row row-cols-2 row-cols-md-4 g-4">
+                    {% for horario in horarios_disponibles %}
+                        <div class="col animate__animated animate__fadeInUp" style="animation-delay: {{ forloop.counter0|multiply:0.1 }}s">
+                            <div class="time-card {% if horario.disponible %}available{% else %}unavailable{% endif %}">
+                                <div class="time-content text-center p-3">
+                                    <h5 class="time-title mb-3">{{ horario.hora_formato }}</h5>
+                                    {% if horario.disponible %}
+                                        <button class="btn btn-reserve pulse-animation"
+                                                data-hora="{{ horario.hora }}"
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#modalReserva">
+                                            <i class="fas fa-check-circle me-2"></i>
+                                            Reservar
+                                        </button>
+                                    {% else %}
+                                        <span class="badge bg-secondary p-2">
+                                            <i class="fas fa-lock me-1"></i>
+                                            Ocupado
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="col-12 text-center p-5 animate__animated animate__fadeIn">
+                            <div class="empty-state">
+                                <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">No hay horarios disponibles para esta fecha</p>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estilos personalizados -->
+<style>
+    .bg-gradient {
+        background: linear-gradient(45deg, #2193b0, #6dd5ed);
+    }
+
+    .hover-effect {
+        transition: all 0.3s ease;
+    }
+
+    .hover-effect:hover {
+        transform: translateY(-5px);
+    }
+
+    .zoom-hover {
+        transition: transform 0.2s ease;
+    }
+
+    .zoom-hover:hover {
+        transform: scale(1.05);
+    }
+
+    .time-card {
+        border-radius: 15px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .time-card.available {
+        background: linear-gradient(145deg, #ffffff, #f0f0f0);
+    }
+
+    .time-card.available:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+    }
+
+    .time-card.unavailable {
+        background: #f8f9fa;
+        opacity: 0.7;
+    }
+
+    .btn-reserve {
+        background: linear-gradient(45deg, #11998e, #38ef7d);
+        color: white;
+        border: none;
+        border-radius: 25px;
+        padding: 8px 20px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-reserve:hover {
+        transform: scale(1.05);
+        box-shadow: 0 5px 15px rgba(56, 239, 125, 0.4);
+    }
+
+    .pulse-animation {
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(56, 239, 125, 0.4);
+        }
+        70% {
+            box-shadow: 0 0 0 10px rgba(56, 239, 125, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(56, 239, 125, 0);
+        }
+    }
+
+    .custom-date-input {
+        border-radius: 10px;
+        border: 2px solid #e0e0e0;
+        padding: 10px;
+        transition: all 0.3s ease;
+    }
+
+    .custom-date-input:focus {
+        border-color: #2193b0;
+        box-shadow: 0 0 0 0.2rem rgba(33, 147, 176, 0.25);
+    }
+
+    .empty-state {
+        animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+        100% { transform: translateY(0px); }
+    }
+</style>
+
+<!-- Necesitamos agregar Animate.css en el head del template base -->
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+{% endblock %}
+{% endblock %}

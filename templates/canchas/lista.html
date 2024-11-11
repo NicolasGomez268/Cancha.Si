@@ -1,36 +1,69 @@
 {% extends 'base.html' %}
+{% load custom_filters %}
 
 {% block title %}Canchas Disponibles{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
     <div class="row">
-        <!-- Filtros -->
+        <!-- Filtros con nueva animación y estilo -->
         <div class="col-md-3">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">Filtros</h5>
+            <div class="card mb-4 filter-card animate__animated animate__fadeIn">
+                <div class="card-header bg-light-green">
+                    <h6 class="mb-0 animated-text">¡Encontrá tu cancha!</h6>
                 </div>
                 <div class="card-body">
                     <form method="get">
-                        <div class="mb-3">
-                            <label class="form-label">Ubicación</label>
-                            <input type="text" class="form-control" name="ubicacion" value="{{ request.GET.ubicacion }}">
+                        <div class="mb-2">
+                            <label class="form-label small">Ubicación</label>
+                            <input type="text" class="form-control form-control-sm" name="ubicacion" value="{{ request.GET.ubicacion }}">
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Nombre de la Cancha</label>
-                            <input type="text" class="form-control" name="nombre" value="{{ request.GET.nombre }}">
+                        <div class="mb-2">
+                            <label class="form-label small">Nombre de la Cancha</label>
+                            <input type="text" class="form-control form-control-sm" name="nombre" value="{{ request.GET.nombre }}">
                         </div>
                         <div class="d-grid">
-                            <button type="submit" class="btn btn-primary">Aplicar Filtros</button>
+                            <button type="submit" class="btn btn-primary btn-sm">Aplicar Filtros</button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
 
-        <!-- Lista de Canchas -->
+        <!-- Lista de Canchas y Nuevos Filtros -->
         <div class="col-md-9">
+            <!-- Nuevos Filtros de Fecha y Hora -->
+            <div class="filters-container mb-3">
+                <div class="calendar-header">
+                    <h6 class="mb-2 animated-text">¡Encontrá tu hora más rápido!</h6>
+                </div>
+                <div class="date-scroll mb-2">
+                    <div class="dates-wrapper d-flex">
+                        {% for date in dates %}
+                        <div class="date-item {% if date == selected_date %}active{% endif %}">
+                            <button class="btn btn-outline-primary rounded-pill px-3" data-date="{{ date|date:'Y-m-d' }}">
+                                <small>{{ date|date:"l"|slice:":3"|upper }}</small><br>
+                                {{ date|date:'d' }}
+                            </button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <div class="time-scroll">
+                    <div class="times-wrapper d-flex">
+                        {% for hour in hours %}
+                        <div class="time-item {% if hour == selected_hour %}active{% endif %}">
+                            <button class="btn btn-outline-secondary rounded-pill px-2" data-hour="{{ hour }}">
+                                {{ hour }}:00
+                            </button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lista de Canchas Existente -->
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2>Canchas Disponibles</h2>
                 <div class="dropdown">
@@ -62,8 +95,11 @@
                                         <i class="fas fa-map-marker-alt"></i> {{ cancha.complejo.ubicacion }}<br>
                                         <i class="fas fa-dollar-sign"></i> ${{ cancha.precio_hora }}/hora
                                     </div>
-                                    <div class="d-grid">
+                                    <div class="d-grid gap-2">
                                         <a href="{% url 'canchas:detalle_cancha' cancha.pk %}" class="btn btn-primary">Ver Detalles</a>
+                                        <a href="{% url 'canchas:reservar_cancha' cancha.id %}" class="btn btn-success">
+                                            <i class="fas fa-calendar-plus"></i> Reservar
+                                        </a>
                                     </div>
                                 </div>
                             </div>
@@ -78,4 +114,121 @@
         </div>
     </div>
 </div>
+
+<!-- Mantener tus estilos y scripts existentes -->
+<style>
+/* Tus estilos existentes más los nuevos */
+.filters-container {
+    position: sticky;
+    top: 0;
+    background: white;
+    z-index: 100;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.date-scroll, .time-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.date-scroll::-webkit-scrollbar, 
+.time-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.dates-wrapper, .times-wrapper {
+    padding: 5px;
+    gap: 8px;
+}
+
+.date-item button, .time-item button {
+    min-width: 45px;
+    font-size: 0.9rem;
+}
+
+.date-item.active button {
+    background-color: var(--bs-primary);
+    color: white;
+}
+
+.time-item.active button {
+    background-color: var(--bs-secondary);
+    color: white;
+}
+
+/* Nuevos estilos para el filtro */
+.filter-card {
+    border-radius: 10px;
+    border: 1px solid rgba(0,0,0,0.08);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+    transition: all 0.3s ease;
+}
+
+.filter-card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+
+.filter-card .card-header {
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    padding: 0.75rem 1rem;
+}
+
+.filter-card .form-control {
+    border-radius: 8px;
+    border: 1px solid rgba(0,0,0,0.1);
+}
+
+.filter-card .btn-primary {
+    border-radius: 8px;
+    padding: 0.4rem 1rem;
+}
+
+/* Estilos para los días en español */
+.date-item small {
+    text-transform: capitalize;
+}
+
+.bg-light-green {
+    background-color: #e8f5e9 !important;
+    border-bottom: 2px solid #81c784;
+}
+
+.animated-text {
+    font-family: 'Poppins', sans-serif;
+    color: #2e7d32;
+    font-weight: 600;
+    text-align: center;
+    animation: bounce 2s infinite;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+    margin: 15px 0;
+    font-size: 1.2rem;
+}
+
+.calendar-header {
+    padding: 10px;
+    background: linear-gradient(to right, #e8f5e9, #c8e6c9);
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+@keyframes bounce {
+    0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+    }
+    40% {
+        transform: translateY(-5px);
+    }
+    60% {
+        transform: translateY(-3px);
+    }
+}
+
+/* Agregar link a Google Fonts en el head del documento */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+</style>
+
+<!-- Mantener tu script existente y agregar el nuevo -->
 {% endblock %}

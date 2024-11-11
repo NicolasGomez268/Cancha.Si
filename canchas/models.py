@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from usuarios.models import PerfilCliente
 from decimal import Decimal
+from django.utils import timezone
 
 # Create your models here.
 
@@ -12,6 +13,18 @@ class Complejo(models.Model):
     telefono = models.CharField(max_length=20)
     stock_cantina = models.JSONField(default=dict)
     ingresos_mensuales = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    hora_apertura = models.TimeField(
+        verbose_name="Hora de apertura",
+        default=timezone.datetime.strptime('08:00', '%H:%M').time()
+    )
+    hora_cierre = models.TimeField(
+        verbose_name="Hora de cierre",
+        default=timezone.datetime.strptime('22:00', '%H:%M').time()
+    )
+    
+    class Meta:
+        verbose_name = "Complejo"
+        verbose_name_plural = "Complejos"
     
     def __str__(self):
         return self.nombre

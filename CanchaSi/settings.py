@@ -109,11 +109,13 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'es-ar'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Argentina/Buenos_Aires'
 
 USE_I18N = True
+
+USE_L10N = True
 
 USE_TZ = True
 
@@ -165,4 +167,6 @@ CELERY_TIMEZONE = 'America/Argentina/Buenos_Aires'  # Tu zona horaria
 REPORTS_ROOT = os.path.join(BASE_DIR, 'media', 'reportes')
 os.makedirs(REPORTS_ROOT, exist_ok=True)
 
-LOGIN_URL = '/accounts/login/'
+LOGIN_URL = 'login'  # URL a la que redirigirá cuando se requiera login
+LOGIN_REDIRECT_URL = 'canchas:lista_canchas'  # URL a la que redirigirá después del login exitoso
+LOGOUT_REDIRECT_URL = '/'  # Redirige a la página principal después del logout

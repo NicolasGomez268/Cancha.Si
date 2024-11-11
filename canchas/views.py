@@ -18,6 +18,12 @@ from openpyxl.styles import Font, PatternFill, Alignment
 from django.http import HttpResponse
 from django.db import models
 from django.db.models.functions import TruncMonth
+from datetime import datetime
+from django.shortcuts import render
+from django.db.models import Q
+import locale
+from django.utils import translation
+from django.utils.formats import date_format
 
 def home(request):
     # Obtener canchas destacadas o más reservadas
@@ -26,22 +32,56 @@ def home(request):
         'canchas_destacadas': canchas_destacadas
     })
 
+@login_required
 def lista_canchas(request):
-    # Filtros
-    ubicacion = request.GET.get('ubicacion')
-    nombre = request.GET.get('nombre')
+    # Forzar el idioma español
+    translation.activate('es')
     
-    canchas = Cancha.objects.all()
-    
-    if ubicacion:
-        canchas = canchas.filter(complejo__ubicacion__icontains=ubicacion)
-    if nombre:
-        canchas = canchas.filter(nombre__icontains=nombre)
-        
-    return render(request, 'canchas/lista.html', {
-        'canchas': canchas
-    })
+    # Obtener parámetros de filtro básicos
+    ubicacion = request.GET.get('ubicacion', '')
+    nombre = request.GET.get('nombre', '')
+    ordenar = request.GET.get('ordenar', '')
 
+    # Iniciar el queryset
+    canchas = Cancha.objects.all()
+
+    # Aplicar filtros de búsqueda
+    if ubicacion:
+        canchas = canchas.filter(
+            Q(complejo__ubicacion__icontains=ubicacion)
+        )
+    
+    if nombre:
+        canchas = canchas.filter(
+            Q(nombre__icontains=nombre) |
+            Q(complejo__nombre__icontains=nombre)
+        )
+
+    # Aplicar ordenamiento
+    if ordenar:
+        if ordenar == 'precio_asc':
+            canchas = canchas.order_by('precio_hora')
+        elif ordenar == 'precio_desc':
+            canchas = canchas.order_by('-precio_hora')
+        elif ordenar == 'nombre':
+            canchas = canchas.order_by('nombre')
+
+    # Generar fechas y horas para los filtros de calendario
+    today = datetime.now().date()
+    dates = [today + timedelta(days=x) for x in range(30)]
+    hours = range(8, 24)
+
+    context = {
+        'canchas': canchas,
+        'dates': dates,
+        'hours': hours,
+        'selected_date': today,
+        'selected_hour': 8
+    }
+    
+    return render(request, 'canchas/lista.html', context)
+
+@login_required
 def detalle_cancha(request, pk):
     cancha = get_object_or_404(Cancha, pk=pk)
     
@@ -70,56 +110,50 @@ def detalle_cancha(request, pk):
 
 @login_required
 def reservar_cancha(request, cancha_id):
-    if request.method == 'POST':
-        cancha = get_object_or_404(Cancha, pk=cancha_id)
-        fecha_hora_str = request.POST.get('fecha_hora')
-        
-        try:
-            fecha_hora = datetime.strptime(fecha_hora_str, '%Y-%m-%d %H:%M')
-            
-            # Verificar si el horario ya está reservado
-            if Reserva.objects.filter(
-                cancha=cancha,
-                fecha_hora=fecha_hora,
-                cancelada=False
-            ).exists():
-                messages.error(request, 'Este horario ya está reservado')
-                return redirect('canchas:detalle_cancha', pk=cancha_id)
-            
-            # Crear la reserva
-            Reserva.objects.create(
-                jugador=request.user,
-                cancha=cancha,
-                fecha_hora=fecha_hora,
-                precio_total=cancha.precio_hora,
-                turno_servicios=request.POST.get('turno_servicios')
-            )
-            
-            # Notificar al jugador
-            NotificacionService.enviar_notificacion(
-                usuario=request.user,
-                tipo='RESERVA',
-                titulo='¡Reserva confirmada!',
-                mensaje=f'Tu reserva para {cancha.nombre} el {fecha_hora.strftime("%d/%m/%Y %H:%M")} ha sido confirmada.',
-                url=reverse('canchas:detalle_reserva', args=[reserva.id])
-            )
-            
-            # Notificar al dueño de la cancha
-            NotificacionService.enviar_notificacion(
-                usuario=cancha.complejo.dueno.usuario,
-                tipo='RESERVA',
-                titulo='Nueva reserva recibida',
-                mensaje=f'Nueva reserva para {cancha.nombre} el {fecha_hora.strftime("%d/%m/%Y %H:%M")}',
-                url=reverse('canchas:detalle_reserva', args=[reserva.id])
-            )
-            
-            messages.success(request, '¡Reserva realizada con éxito!')
-            return redirect('usuarios:perfil')
-            
-        except ValueError:
-            messages.error(request, 'Formato de fecha y hora inválido')
-            
-    return redirect('canchas:detalle_cancha', pk=cancha_id)
+    cancha = get_object_or_404(Cancha, id=cancha_id)
+    complejo = cancha.complejo
+    fecha_actual = datetime.now().date()
+    
+    # Obtener fecha seleccionada del GET, si no hay usa la fecha actual
+    fecha_seleccionada = request.GET.get('fecha')
+    if fecha_seleccionada:
+        fecha_seleccionada = datetime.strptime(fecha_seleccionada, '%Y-%m-%d').date()
+    else:
+        fecha_seleccionada = fecha_actual
+
+    # Obtener reservas existentes para la fecha seleccionada
+    reservas_del_dia = Reserva.objects.filter(
+        cancha=cancha,
+        fecha_hora__date=fecha_seleccionada,
+        cancelada=False
+    )
+
+    # Crear lista de horarios ocupados
+    horas_ocupadas = set()
+    for reserva in reservas_del_dia:
+        hora_inicio = reserva.fecha_hora.hour
+        for i in range(reserva.duracion):  # duracion en horas
+            horas_ocupadas.add(hora_inicio + i)
+
+    # Generar lista de horarios disponibles
+    horarios_disponibles = []
+    for hora in range(complejo.hora_apertura.hour, complejo.hora_cierre.hour):
+        disponible = hora not in horas_ocupadas
+        horarios_disponibles.append({
+            'hora': hora,
+            'hora_formato': f"{hora:02d}:00",
+            'disponible': disponible
+        })
+
+    context = {
+        'cancha': cancha,
+        'complejo': complejo,
+        'fecha_seleccionada': fecha_seleccionada,
+        'fecha_minima': fecha_actual,
+        'horarios_disponibles': horarios_disponibles,
+    }
+    
+    return render(request, 'canchas/reservar.html', context)
 
 @login_required
 def cancelar_reserva(request, reserva_id):

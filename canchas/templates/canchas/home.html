@@ -1,10 +1,42 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h1>Bienvenido a Cancha.Si</h1>
-<ul>
-    {% for cancha in canchas_destacadas %}
-    <li>{{ cancha.nombre }}</li>
-    {% endfor %}
-</ul>
+<div class="container">
+
+    <!-- Barra de búsqueda -->
+    <div class="row justify-content-center mb-4">
+        <div class="col-md-8">
+            <form class="d-flex gap-2" method="get" action="{% url 'home' %}">
+                <input type="text" class="form-control" name="nombre" placeholder="Buscar por nombre..." value="{{ request.GET.nombre }}">
+                <input type="text" class="form-control" name="ubicacion" placeholder="Buscar por ubicación..." value="{{ request.GET.ubicacion }}">
+                <button type="submit" class="btn btn-primary">Buscar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Grid de canchas -->
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        {% for cancha in canchas %}
+        <div class="col">
+            <div class="card h-100">
+                {% if cancha.imagen %}
+                    <img src="{{ cancha.imagen.url }}" class="card-img-top" alt="{{ cancha.nombre }}">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ cancha.nombre }} - {{ cancha.complejo.nombre }}</h5>
+                    <p class="card-text">
+                        <strong>Ubicación:</strong> {{ cancha.complejo.ubicacion }}<br>
+                        <strong>Precio por hora:</strong> ${{ cancha.precio_hora }}
+                    </p>
+                    <a href="{% url 'canchas:detalle_cancha' cancha.id %}" class="btn btn-primary">Ver detalles</a>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center">
+            <p>No hay canchas disponibles</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
 {% endblock %}

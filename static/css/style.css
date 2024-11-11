@@ -1,11 +1,18 @@
 /* Estilos generales */
 body {
-    background-color: #f8f9fa;
+    background-color: #9bdf7e;
+    background-image: url('/static/img/cesped.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    min-height: 100vh;
+    margin: 0;
 }
 
 /* Cards con hover effect */
 .card {
     transition: transform 0.3s, box-shadow 0.3s;
+    border-radius: 10px; /* Bordes redondeados */
 }
 
 .card:hover {
@@ -30,6 +37,7 @@ body {
 .btn-animate {
     position: relative;
     overflow: hidden;
+    transition: background-color 0.3s, transform 0.3s; /* Transición suave para el botón */
 }
 
 .btn-animate::after {
@@ -47,6 +55,11 @@ body {
     left: 100%;
 }
 
+.btn-animate:hover {
+    background-color: #5cbf2a; /* Color al pasar el mouse */
+    transform: scale(1.05); /* Aumenta el tamaño al pasar el mouse */
+}
+
 /* Estilos para las imágenes de las canchas */
 .cancha-img {
     height: 200px;
@@ -61,8 +74,8 @@ body {
 
 /* Formularios */
 .form-control:focus {
-    border-color: #2c3e50;
-    box-shadow: 0 0 0 0.2rem rgba(44, 62, 80, 0.25);
+    border-color: #66bb6a; /* Color del borde al enfocar */
+    box-shadow: 0 0 5px rgba(102, 187, 106, 0.5); /* Sombra al enfocar */
 }
 
 /* Alertas personalizadas */
@@ -102,7 +115,10 @@ body {
 /* Asegúrate de que el contenedor principal tenga un ancho adecuado */
 .container {
     max-width: 100%;
-    padding: 15px;
+    padding: 20px;
+    background-color: transparent;
+    border-radius: 10px;
+    box-shadow: none;
 }
 
 /* Ajustar el tamaño de los inputs y botones */
@@ -125,4 +141,148 @@ body {
     .card-header, .card-body {
         padding: 15px;
     }
+}
+
+/* styles.css */
+.navbar {
+    transition: background-color 0.3s, box-shadow 0.3s;
+    border-radius: 0 0 10px 10px; /* Bordes redondeados en la parte inferior */
+    padding: 10px 15px; /* Espaciado reducido */
+}
+
+.navbar:hover {
+    background-color: #4CAF50; /* Cambia el color al pasar el mouse */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Sombra al pasar el mouse */
+}
+
+.nav-link {
+    transition: color 0.3s;
+    color: #fff; /* Color del texto de los enlaces */
+    font-size: 0.9rem; /* Tamaño de fuente más pequeño */
+}
+
+.nav-link:hover {
+    color: #FFD54F; /* Color al pasar el mouse */
+}
+
+.header {
+    background-color: #d4edda; /* Verde claro */
+    padding: 20px; /* Espaciado interno */
+    border-radius: 10px; /* Bordes redondeados */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra */
+    animation: fadeIn 0.5s; /* Animación de entrada */
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* styles.css */
+.navbar-brand {
+    font-size: 1.5rem; /* Tamaño de fuente más pequeño */
+    font-weight: bold; /* Haz que el texto sea más grueso */
+    animation: fadeIn 0.5s ease-in-out; /* Animación de entrada */
+    transition: transform 0.3s; /* Transición para el efecto de hover */
+    color: #fff; /* Color del texto */
+}
+
+.navbar-brand:hover {
+    transform: scale(1.05); /* Aumenta el tamaño al pasar el mouse */
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px); /* Mueve el texto hacia arriba */
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0); /* Regresa a su posición original */
+    }
+}
+
+/* Media Queries para móviles */
+@media (max-width: 576px) {
+    .header {
+        padding: 15px; /* Ajusta el padding para móviles */
+    }
+
+    .navbar-brand {
+        font-size: 1.2rem; /* Ajusta el tamaño de la fuente para móviles */
+    }
+}
+
+.navbar-brand {
+    color: #fff; /* Color del texto */
+    font-size: 1.5rem; /* Tamaño de fuente más pequeño */
+    animation: fadeIn 0.5s ease-in-out; /* Animación de entrada */
+}
+
+.navbar-toggler {
+    border: none; /* Elimina el borde del botón */
+}
+
+.navbar-toggler-icon {
+    background-color: #fff; /* Cambia el color del icono del botón */
+}
+
+.nav-link {
+    color: #fff; /* Color del texto de los enlaces */
+    font-size: 0.9rem; /* Tamaño de fuente más pequeño */
+    transition: color 0.3s; /* Transición suave para el color */
+}
+
+.nav-link:hover {
+    color: #FFD54F; /* Color al pasar el mouse */
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px); /* Mueve el texto hacia arriba */
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0); /* Regresa a su posición original */
+    }
+}
+
+/* Media Queries para móviles */
+@media (max-width: 576px) {
+    .navbar-brand {
+        font-size: 1.2rem; /* Ajusta el tamaño de la fuente para móviles */
+    }
+}
+
+.card-header {
+    border-radius: 10px 10px 0 0; /* Bordes redondeados en la parte superior */
+}
+
+.form-label {
+    font-weight: bold; /* Texto en negrita para las etiquetas */
+}
+
+.form-control {
+    border-radius: 5px; /* Bordes redondeados para los campos de entrada */
+    border: 1px solid #ced4da; /* Borde gris claro */
+    transition: border-color 0.3s; /* Transición suave para el borde */
+}
+
+.form-control:focus {
+    border-color: #66bb6a; /* Color del borde al enfocar */
+    box-shadow: 0 0 5px rgba(102, 187, 106, 0.5); /* Sombra al enfocar */
+}
+
+.btn-animate {
+    transition: background-color 0.3s, transform 0.3s; /* Transición suave para el botón */
+}
+
+.btn-animate:hover {
+    background-color: #5cbf2a; /* Color al pasar el mouse */
+    transform: scale(1.05); /* Aumenta el tamaño al pasar el mouse */
 }

@@ -24,12 +24,28 @@ from django.db.models import Q
 import locale
 from django.utils import translation
 from django.utils.formats import date_format
+from .models import Cancha
+
 
 def home(request):
-    # Obtener canchas destacadas o más reservadas
-    canchas_destacadas = Cancha.objects.all()[:6]
+    # Obtener todas las canchas
+    canchas = Cancha.objects.all()
+    
+    # Obtener parámetros de filtro básicos
+    ubicacion = request.GET.get('ubicacion', '')
+    nombre = request.GET.get('nombre', '')
+    
+    # Aplicar filtros si existen
+    if ubicacion:
+        canchas = canchas.filter(complejo__ubicacion__icontains=ubicacion)
+    if nombre:
+        canchas = canchas.filter(
+            Q(nombre__icontains=nombre) | 
+            Q(complejo__nombre__icontains=nombre)
+        )
+    
     return render(request, 'canchas/home.html', {
-        'canchas_destacadas': canchas_destacadas
+        'canchas': canchas,
     })
 
 @login_required
@@ -37,6 +53,10 @@ def lista_canchas(request):
     # Forzar el idioma español
     translation.activate('es')
     
+    # Obtener fecha y hora seleccionadas
+    selected_date = request.GET.get('fecha', datetime.now().date().strftime('%Y-%m-%d'))
+    selected_hour = int(request.GET.get('hora', '8'))
+
     # Obtener parámetros de filtro básicos
     ubicacion = request.GET.get('ubicacion', '')
     nombre = request.GET.get('nombre', '')
@@ -45,41 +65,51 @@ def lista_canchas(request):
     # Iniciar el queryset
     canchas = Cancha.objects.all()
 
+    # Convertir fecha string a objeto date
+    fecha_seleccionada = datetime.strptime(selected_date, '%Y-%m-%d').date()
+
+    # Filtrar canchas disponibles
+    todas_canchas = canchas
+    canchas_disponibles = [
+        cancha for cancha in todas_canchas 
+        if cancha.esta_disponible(fecha_seleccionada, selected_hour)
+    ]
+
     # Aplicar filtros de búsqueda
     if ubicacion:
-        canchas = canchas.filter(
-            Q(complejo__ubicacion__icontains=ubicacion)
-        )
+        canchas_disponibles = [c for c in canchas_disponibles 
+                             if ubicacion.lower() in c.complejo.ubicacion.lower()]
     
     if nombre:
-        canchas = canchas.filter(
-            Q(nombre__icontains=nombre) |
-            Q(complejo__nombre__icontains=nombre)
-        )
+        canchas_disponibles = [c for c in canchas_disponibles 
+                             if nombre.lower() in c.nombre.lower() or 
+                             nombre.lower() in c.complejo.nombre.lower()]
 
     # Aplicar ordenamiento
     if ordenar:
         if ordenar == 'precio_asc':
-            canchas = canchas.order_by('precio_hora')
+            canchas_disponibles.sort(key=lambda x: x.precio_hora)
         elif ordenar == 'precio_desc':
-            canchas = canchas.order_by('-precio_hora')
+            canchas_disponibles.sort(key=lambda x: x.precio_hora, reverse=True)
         elif ordenar == 'nombre':
-            canchas = canchas.order_by('nombre')
+            canchas_disponibles.sort(key=lambda x: x.nombre)
 
-    # Generar fechas y horas para los filtros de calendario
+    # Generar fechas para el calendario
     today = datetime.now().date()
     dates = [today + timedelta(days=x) for x in range(30)]
+    
+    # Generar horas disponibles
     hours = range(8, 24)
 
     context = {
-        'canchas': canchas,
+        'canchas': canchas_disponibles,
         'dates': dates,
         'hours': hours,
-        'selected_date': today,
-        'selected_hour': 8
+        'selected_date': fecha_seleccionada,
+        'selected_hour': selected_hour
     }
     
-    return render(request, 'canchas/lista.html', context)
+    return render(request, 'canchas/lista_canchas.html', context)
 
 @login_required
 def detalle_cancha(request, pk):

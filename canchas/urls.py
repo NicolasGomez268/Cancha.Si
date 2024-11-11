@@ -11,4 +11,6 @@ urlpatterns = [
     path('reservas/<int:reserva_id>/comprobante/', views.descargar_comprobante_reserva, name='comprobante_reserva'),
     path('complejos/<int:complejo_id>/estadisticas/', views.estadisticas_complejo, name='estadisticas_complejo'),
     path('complejos/<int:complejo_id>/exportar/', views.exportar_estadisticas_excel, name='exportar_estadisticas_excel'),
+    path('', views.lista_canchas, name='lista_canchas'),  # Vista principal
+    path('canchas/', views.lista_canchas, name='lista_canchas_alt'),  # URL alternativa
 ]

@@ -30,12 +30,26 @@ class Complejo(models.Model):
         return self.nombre
 
 class Cancha(models.Model):
-    complejo = models.ForeignKey(Complejo, on_delete=models.CASCADE, related_name='canchas')
-    foto = models.ImageField(upload_to='canchas/')
-    nombre = models.CharField(max_length=200)
+    nombre = models.CharField(max_length=100)
+    complejo = models.ForeignKey('Complejo', on_delete=models.CASCADE)
     precio_hora = models.DecimalField(max_digits=8, decimal_places=2)
-    servicios = models.JSONField(default=dict)  # Para parrillas, mesas, cantina, etc.
-    
+    descripcion = models.TextField(null=True, blank=True)
+    imagen = models.ImageField(upload_to='canchas/', null=True, blank=True)
+    # Nuevos campos para disponibilidad
+    dias_disponibles = models.CharField(max_length=100, default='1,2,3,4,5,6,7')  # 1=Lun, 7=Dom
+    hora_inicio = models.IntegerField(default=8)  # 8 AM
+    hora_fin = models.IntegerField(default=23)    # 11 PM
+
+    def get_dias_disponibles(self):
+        return [int(x) for x in self.dias_disponibles.split(',')]
+
+    def esta_disponible(self, fecha, hora):
+        dia_semana = fecha.isoweekday()  # 1=Lun, 7=Dom
+        return (
+            dia_semana in self.get_dias_disponibles() and
+            self.hora_inicio <= hora <= self.hora_fin
+        )
+
     def __str__(self):
         return f'{self.nombre} - {self.complejo.nombre}'
 

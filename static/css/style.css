@@ -1,12 +1,15 @@
 /* Estilos generales */
+html, body {
+    height: 100%; /* Asegúrate de que html y body ocupen el 100% de la altura */
+    margin: 0; /* Elimina el margen */
+}
+
 body {
-    background-color: #9bdf7e;
-    background-image: url('/static/img/cesped.jpg');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    min-height: 100vh;
-    margin: 0;
+    background-color: #9bdf7e; /* Color de fondo de respaldo */
+    background-image: url('/static/img/cesped.jpg'); /* Imagen de fondo */
+    background-size: cover; /* Asegúrate de que la imagen cubra todo el fondo */
+    background-position: center; /* Centra la imagen */
+    background-repeat: repeat; /* repetir la imagen */
 }
 
 /* Cards con hover effect */

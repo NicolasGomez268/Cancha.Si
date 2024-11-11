@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from .views import hacer_reserva
 
 app_name = 'canchas'
 
@@ -13,4 +14,5 @@ urlpatterns = [
     path('complejos/<int:complejo_id>/exportar/', views.exportar_estadisticas_excel, name='exportar_estadisticas_excel'),
     path('', views.lista_canchas, name='lista_canchas'),  # Vista principal
     path('canchas/', views.lista_canchas, name='lista_canchas_alt'),  # URL alternativa
+    path('reservar/<int:cancha_id>/', hacer_reserva, name='hacer_reserva'),
 ]

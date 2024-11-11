@@ -25,6 +25,7 @@ import locale
 from django.utils import translation
 from django.utils.formats import date_format
 from .models import Cancha
+from .forms import ReservaForm
 
 
 def home(request):
@@ -548,3 +549,20 @@ def exportar_estadisticas_excel(request, complejo_id):
     except Exception as e:
         messages.error(request, f'Error al exportar estadísticas: {str(e)}')
         return redirect('canchas:detalle_complejo', complejo_id=complejo_id)
+
+def hacer_reserva(request, cancha_id):
+    cancha = get_object_or_404(Cancha, id=cancha_id)
+    
+    if request.method == 'POST':
+        form = ReservaForm(request.POST)
+        if form.is_valid():
+            reserva = form.save(commit=False)
+            reserva.jugador = request.user
+            reserva.cancha = cancha
+            reserva.precio_total = cancha.precio_hora
+            reserva.save()
+            return redirect('reservas:exito')
+    else:
+        form = ReservaForm(initial={'cancha': cancha})
+
+    return render(request, 'canchas/reservas/hacer_reserva.html', {'form': form, 'cancha': cancha})

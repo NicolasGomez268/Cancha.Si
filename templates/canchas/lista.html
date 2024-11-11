@@ -13,17 +13,19 @@
                     <h6 class="mb-0 animated-text">¡Encontrá tu cancha!</h6>
                 </div>
                 <div class="card-body">
-                    <form method="get">
+                    <form method="get" style="background: rgba(255, 255, 255, 0.8); border-radius: 10px; padding: 15px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);">
                         <div class="mb-2">
                             <label class="form-label small">Ubicación</label>
-                            <input type="text" class="form-control form-control-sm" name="ubicacion" value="{{ request.GET.ubicacion }}">
+                            <input type="text" class="form-control form-control-sm" name="ubicacion" value="{{ request.GET.ubicacion }}" style="border-radius: 5px; border: 1px solid #66bb6a;">
                         </div>
                         <div class="mb-2">
                             <label class="form-label small">Nombre de la Cancha</label>
-                            <input type="text" class="form-control form-control-sm" name="nombre" value="{{ request.GET.nombre }}">
+                            <input type="text" class="form-control form-control-sm" name="nombre" value="{{ request.GET.nombre }}" style="border-radius: 5px; border: 1px solid #66bb6a;">
                         </div>
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary btn-sm">Aplicar Filtros</button>
+                        <div class="d-flex gap-3">
+                            <button type="button" class="btn btn-outline-secondary w-100">Buscar por nombre</button>
+                            <button type="button" class="btn btn-outline-secondary w-100">Buscar por ubicación</button>
+                            <button type="submit" class="btn btn-primary w-100">Buscar</button>
                         </div>
                     </form>
                 </div>

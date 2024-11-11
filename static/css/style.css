@@ -289,3 +289,29 @@ body {
     background-color: #5cbf2a; /* Color al pasar el mouse */
     transform: scale(1.05); /* Aumenta el tamaño al pasar el mouse */
 }
+
+.filter-card {
+    border-radius: 10px;
+    border: 1px solid rgba(0,0,0,0.08);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+    transition: all 0.3s ease;
+}
+
+.filter-card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+
+.filter-card .form-control {
+    border-radius: 8px;
+    border: 1px solid rgba(0,0,0,0.1);
+}
+
+.filter-card .btn-primary {
+    border-radius: 8px;
+    padding: 0.4rem 1rem;
+}
+
+.btn {
+    min-width: 120px; /* Ajusta el ancho mínimo según sea necesario */
+    white-space: nowrap; /* Evita que el texto se divida en varias líneas */
+}

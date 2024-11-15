@@ -38,6 +38,11 @@
                             </button>
                         </form>
                     </li>
+                    {% if user.is_authenticated and user.perfil_cliente %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'canchas:perfil_dueno' %}">Panel de Control</a>
+                        </li>
+                    {% endif %}
                 {% else %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'usuarios:login' %}">Iniciar Sesión</a>

@@ -2,25 +2,34 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h2 class="text-center">Hacer Reserva para {{ cancha.nombre }}</h2>
-    <form method="post" class="bg-light p-4 rounded shadow">
+    <h3 class="text-center mb-4" style="color: #43a047;">¡Reserva tu Cancha!</h3>
+    <form method="post" class="bg-light p-4 rounded shadow" style="border: 2px solid #66bb6a;">
         {% csrf_token %}
+        
         <div class="form-group">
-            <label for="cancha">Selecciona la Cancha:</label>
+            <label for="cancha" class="font-weight-bold">Selecciona la Cancha:</label>
             <select name="cancha" id="cancha" class="form-control" required>
                 <option value="{{ cancha.id }}">{{ cancha.nombre }}</option>
                 <!-- Agrega más opciones si es necesario -->
             </select>
         </div>
+        
         <div class="form-group">
-            <label for="fecha">Fecha:</label>
+            <label for="fecha" class="font-weight-bold">Fecha:</label>
             <input type="date" name="fecha" id="fecha" class="form-control" required>
         </div>
+        
         <div class="form-group">
-            <label for="hora">Hora:</label>
-            <input type="time" name="hora" id="hora" class="form-control" required>
+            <label for="hora" class="font-weight-bold">Hora:</label>
+            <select name="hora" id="hora" class="form-control" required>
+                <option value="">Selecciona una hora</option>
+                {% for hour in range(10, 24) %}
+                    <option value="{{ hour }}:00">{{ hour }}:00</option>
+                {% endfor %}
+            </select>
         </div>
-        <button type="submit" class="btn btn-primary btn-block">Reservar</button>
+        
+        <button type="submit" class="btn btn-success btn-block">Reservar</button>
     </form>
 </div>
 {% endblock %}

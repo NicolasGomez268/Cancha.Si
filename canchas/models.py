@@ -7,7 +7,7 @@ from django.utils import timezone
 # Create your models here.
 
 class Complejo(models.Model):
-    dueno = models.ForeignKey(PerfilCliente, on_delete=models.CASCADE, related_name='complejos')
+    dueno = models.ForeignKey(User, on_delete=models.CASCADE, related_name='complejos')
     nombre = models.CharField(max_length=200)
     ubicacion = models.CharField(max_length=200)
     telefono = models.CharField(max_length=20)
@@ -21,6 +21,10 @@ class Complejo(models.Model):
         verbose_name="Hora de cierre",
         default=timezone.datetime.strptime('22:00', '%H:%M').time()
     )
+    # Nuevos campos para servicios adicionales
+    servicios = models.TextField(blank=True)
+    tiene_parrillas = models.BooleanField(default=False)
+    tiene_mesas = models.BooleanField(default=False)
     
     class Meta:
         verbose_name = "Complejo"

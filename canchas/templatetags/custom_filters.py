@@ -14,3 +14,7 @@ def diccionario_dias(day):
         'Sun': 'DOM'
     }
     return dias.get(day, day)
+
+@register.filter
+def multiply(value, arg):
+    return value * arg

@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Panel de Control - {{ complejo.nombre }}</h1>
+    
+    <div class="row mt-4">
+        <!-- Información del Complejo -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Información del Complejo</h5>
+                    <p><strong>Dirección:</strong> {{ complejo.direccion }}</p>
+                    <p><strong>Teléfono:</strong> {{ complejo.telefono }}</p>
+                    <p><strong>Horario:</strong> {{ complejo.hora_apertura|time:"H:i" }} - {{ complejo.hora_cierre|time:"H:i" }}</p>
+                    <p><strong>Servicios:</strong> {{ complejo.servicios|default:"No hay servicios registrados" }}</p>
+                    <p><strong>Parrillas:</strong> {% if complejo.tiene_parrillas %}Sí{% else %}No{% endif %}</p>
+                    <p><strong>Mesas:</strong> {% if complejo.tiene_mesas %}Sí{% else %}No{% endif %}</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Estadísticas -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Estadísticas</h5>
+                    <p><strong>Cantidad de Canchas:</strong> {{ canchas.count }}</p>
+                    <p><strong>Reservas Totales:</strong> {{ reservas_totales }}</p>
+                    <p><strong>Reservas Canceladas:</strong> {{ reservas_canceladas }}</p>
+                    <p><strong>Ingresos por Señas (Este mes):</strong> ${{ ingresos_señas }}</p>
+                    <p><strong>Ingresos por Canchas (Este mes):</strong> ${{ ingresos_canchas }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Canchas -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Mis Canchas</h5>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Tipo</th>
+                                    <th>Precio por Hora</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for cancha in canchas %}
+                                <tr>
+                                    <td>{{ cancha.nombre }}</td>
+                                    <td>{{ cancha.get_tipo_display }}</td>
+                                    <td>${{ cancha.precio_hora }}</td>
+                                    <td>{% if cancha.disponible %}Disponible{% else %}No Disponible{% endif %}</td>
+                                    <td>
+                                        <a href="{% url 'canchas:editar_cancha' cancha.id %}" class="btn btn-sm btn-primary">Editar</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

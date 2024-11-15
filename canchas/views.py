@@ -160,11 +160,7 @@ def reservar_cancha(request, cancha_id):
     )
 
     # Crear lista de horarios ocupados
-    horas_ocupadas = set()
-    for reserva in reservas_del_dia:
-        hora_inicio = reserva.fecha_hora.hour
-        for i in range(reserva.duracion):  # duracion en horas
-            horas_ocupadas.add(hora_inicio + i)
+    horas_ocupadas = {reserva.fecha_hora.hour for reserva in reservas_del_dia}
 
     # Generar lista de horarios disponibles
     horarios_disponibles = []
@@ -184,6 +180,22 @@ def reservar_cancha(request, cancha_id):
         'horarios_disponibles': horarios_disponibles,
     }
     
+    if request.method == 'POST':
+        form = ReservaForm(request.POST)
+        if form.is_valid():
+            reserva = form.save(commit=False)
+            reserva.cancha = cancha
+            reserva.usuario = request.user
+            reserva.save()
+            # Redirigir a la página de confirmación o lista de reservas
+            return redirect('canchas:hacer_reserva', cancha_id=cancha_id)
+    else:
+        form = ReservaForm()
+
+    context = {
+        'cancha': cancha,
+        'form': form,
+    }
     return render(request, 'canchas/reservar.html', context)
 
 @login_required
@@ -550,9 +562,9 @@ def exportar_estadisticas_excel(request, complejo_id):
         messages.error(request, f'Error al exportar estadísticas: {str(e)}')
         return redirect('canchas:detalle_complejo', complejo_id=complejo_id)
 
+@login_required
 def hacer_reserva(request, cancha_id):
     cancha = get_object_or_404(Cancha, id=cancha_id)
-    
     if request.method == 'POST':
         form = ReservaForm(request.POST)
         if form.is_valid():
@@ -561,8 +573,116 @@ def hacer_reserva(request, cancha_id):
             reserva.cancha = cancha
             reserva.precio_total = cancha.precio_hora
             reserva.save()
-            return redirect('reservas:exito')
+            # Redirigir a la p��gina de confirmación
+            return redirect('canchas:confirmacion_reserva', reserva_id=reserva.id)
     else:
         form = ReservaForm(initial={'cancha': cancha})
 
     return render(request, 'canchas/reservas/hacer_reserva.html', {'form': form, 'cancha': cancha})
+
+@login_required
+def lista_reservas(request):
+    reservas = Reserva.objects.filter(usuario=request.user)
+    return render(request, 'canchas/lista_reservas.html', {'reservas': reservas})
+
+@login_required
+def confirmacion_reserva(request, reserva_id):
+    reserva = get_object_or_404(Reserva, id=reserva_id)
+    return render(request, 'canchas/confirmacion_reserva.html', {'reserva': reserva})
+
+@login_required
+def perfil_dueño(request):
+    # Imprimir para debug
+    print("Usuario:", request.user)
+    
+    try:
+        # Verificar si el usuario tiene un perfil de dueño
+        if not hasattr(request.user, 'perfil_cliente'):
+            messages.error(request, 'No tienes permisos de dueño')
+            return redirect('home')
+        
+        # Obtener el complejo del dueño actual
+        complejo = get_object_or_404(Complejo, dueno=request.user)
+        print("Complejo encontrado:", complejo)
+        
+        # Obtener el mes actual
+        mes_actual = timezone.now().month
+        año_actual = timezone.now().year
+        
+        # Obtener estadísticas
+        canchas = Cancha.objects.filter(complejo=complejo)
+        print("Cantidad de canchas:", canchas.count())
+        
+        reservas_totales = Reserva.objects.filter(cancha__complejo=complejo).count()
+        print("Reservas totales:", reservas_totales)
+        
+        reservas_canceladas = Reserva.objects.filter(
+            cancha__complejo=complejo, 
+            estado='cancelada'
+        ).count()
+        print("Reservas canceladas:", reservas_canceladas)
+        
+        # Calcular ingresos mensuales
+        ingresos_señas = Reserva.objects.filter(
+            cancha__complejo=complejo,
+            fecha_reserva__month=mes_actual,
+            fecha_reserva__year=año_actual,
+            estado='confirmada'
+        ).aggregate(total=Sum('precio_total'))['total'] or 0
+        print("Ingresos por señas:", ingresos_señas)
+        
+        ingresos_canchas = Reserva.objects.filter(
+            cancha__complejo=complejo,
+            fecha_hora__month=mes_actual,
+            fecha_hora__year=año_actual,
+            estado='confirmada'
+        ).aggregate(total=Sum('precio_total'))['total'] or 0
+        print("Ingresos por canchas:", ingresos_canchas)
+        
+        context = {
+            'complejo': complejo,
+            'canchas': canchas,
+            'reservas_totales': reservas_totales,
+            'reservas_canceladas': reservas_canceladas,
+            'ingresos_señas': ingresos_señas,
+            'ingresos_canchas': ingresos_canchas,
+        }
+        return render(request, 'canchas/perfil_dueno.html', context)
+        
+    except Exception as e:
+        print("Error:", str(e))
+        # Manejar el error apropiadamente
+        return render(request, 'canchas/error.html', {'error': str(e)})
+
+@login_required
+def editar_complejo(request, complejo_id):
+    complejo = get_object_or_404(Complejo, id=complejo_id, dueno=request.user)
+    
+    if request.method == 'POST':
+        # Actualizar datos del complejo
+        complejo.nombre = request.POST.get('nombre')
+        complejo.direccion = request.POST.get('direccion')
+        complejo.telefono = request.POST.get('telefono')
+        complejo.hora_apertura = request.POST.get('hora_apertura')
+        complejo.hora_cierre = request.POST.get('hora_cierre')
+        complejo.servicios = request.POST.get('servicios')
+        complejo.save()
+        return redirect('canchas:perfil_dueño')
+    
+    return render(request, 'canchas/editar_complejo.html', {'complejo': complejo})
+
+@login_required
+def editar_cancha(request, cancha_id):
+    cancha = get_object_or_404(Cancha, id=cancha_id, complejo__dueno=request.user)
+    
+    if request.method == 'POST':
+        # Actualizar datos de la cancha
+        cancha.nombre = request.POST.get('nombre')
+        cancha.tipo = request.POST.get('tipo')
+        cancha.precio_hora = request.POST.get('precio_hora')
+        cancha.disponible = request.POST.get('disponible') == 'on'
+        cancha.descripcion = request.POST.get('descripcion')
+        cancha.save()
+        return redirect('canchas:perfil_dueño')
+    
+    return render(request, 'canchas/editar_cancha.html', {'cancha': cancha})
